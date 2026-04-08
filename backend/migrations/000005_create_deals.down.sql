@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS deal_comments;
+DROP TABLE IF EXISTS deal_status_history;
+DROP TABLE IF EXISTS deal_documents;
+DROP TABLE IF EXISTS deals;
+DROP TYPE IF EXISTS comment_visibility;
+DROP TYPE IF EXISTS comment_type;
+DROP TYPE IF EXISTS actor_role;
+DROP TYPE IF EXISTS doc_status;
+DROP TYPE IF EXISTS doc_type;
+DROP TYPE IF EXISTS deal_status;

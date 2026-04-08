@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 260" role="img" aria-labelledby="logoTitle logoDesc">
+  <title id="logoTitle">Silk Road Hub</title>
+  <desc id="logoDesc">Silk Road Hub wordmark</desc>
+  <defs>
+    <linearGradient id="brandLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1d4ed8" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+  </defs>
+  <rect width="960" height="260" fill="transparent" />
+  <text x="480" y="114" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="76" font-weight="800" letter-spacing="4" fill="#0f172a">
+    SILK ROAD
+  </text>
+  <text x="480" y="188" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="68" font-weight="700" letter-spacing="10" fill="#1e3a8a">
+    HUB
+  </text>
+  <line x1="90" y1="166" x2="300" y2="166" stroke="url(#brandLine)" stroke-width="10" stroke-linecap="round" />
+  <line x1="660" y1="166" x2="870" y2="166" stroke="url(#brandLine)" stroke-width="10" stroke-linecap="round" />
+</svg>

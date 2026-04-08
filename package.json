@@ -1,0 +1,48 @@
+{
+  "name": "silk-road-hub",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "offline:serve": "next start --hostname 127.0.0.1 --port 4173",
+    "preview": "npm run build && npm run offline:serve",
+    "demo:launch": "node scripts/launch-demo.mjs",
+    "demo": "npm run demo:launch",
+    "test": "npm run test:unit",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "offline": "npm run preview"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "file-type": "^20.5.0",
+    "formidable": "^3.5.4",
+    "lucide-react": "^0.577.0",
+    "next": "^15.5.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.13.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.1",
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/formidable": "^3.4.5",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^16.5.0",
+    "jsdom": "^26.1.0",
+    "@playwright/test": "^1.54.2",
+    "tailwindcss": "^4.2.1",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.48.0",
+    "vitest": "^3.2.4"
+  }
+}

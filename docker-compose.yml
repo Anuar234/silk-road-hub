@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: silkroadhub
+      POSTGRES_USER: srh
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-srh_dev_pass}
+      POSTGRES_HOST_AUTH_METHOD: md5
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
+    ports:
+      - "5435:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U srh -d silkroadhub"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SRH_DB_URL: postgres://srh:${POSTGRES_PASSWORD:-srh_dev_pass}@postgres:5432/silkroadhub?sslmode=disable
+      SRH_REDIS_URL: redis://redis:6379/0
+      SRH_SESSION_SECRET: ${SESSION_SECRET:-dev-session-secret-change-me}
+      SRH_CORS_ORIGIN: http://localhost:3000
+      SRH_SECURE_COOKIES: "false"
+      SRH_UPLOAD_DIR: /app/storage/uploads
+      SRH_RUN_MIGRATIONS: "true"
+    volumes:
+      - upload_data:/app/storage/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+  redis_data:
+  upload_data:

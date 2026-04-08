@@ -1,0 +1,41 @@
+{
+  "ci": {
+    "collect": {
+      "numberOfRuns": 3,
+      "startServerCommand": "npm run dev",
+      "startServerReadyPattern": "Ready",
+      "startServerReadyTimeout": 120000,
+      "url": [
+        "http://127.0.0.1:3000/#/",
+        "http://127.0.0.1:3000/#/catalog",
+        "http://127.0.0.1:3000/#/login"
+      ]
+    },
+    "assert": {
+      "preset": "lighthouse:recommended",
+      "assertions": {
+        "largest-contentful-paint": [
+          "error",
+          {
+            "maxNumericValue": 2500
+          }
+        ],
+        "cumulative-layout-shift": [
+          "error",
+          {
+            "maxNumericValue": 0.1
+          }
+        ],
+        "interactive": [
+          "warn",
+          {
+            "maxNumericValue": 5000
+          }
+        ]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

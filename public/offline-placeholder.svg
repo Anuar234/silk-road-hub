@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" role="img" aria-labelledby="title desc">
+  <title id="title">Silk Road Hub placeholder</title>
+  <desc id="desc">Fallback image used when offline resources are unavailable.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e2e8f0" />
+      <stop offset="100%" stop-color="#cbd5e1" />
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1d4ed8" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="750" fill="url(#bg)" />
+  <g opacity="0.35">
+    <circle cx="180" cy="150" r="110" fill="#93c5fd" />
+    <circle cx="1080" cy="620" r="180" fill="#bfdbfe" />
+  </g>
+  <g transform="translate(600 315)">
+    <circle cx="0" cy="0" r="86" fill="#ffffff" opacity="0.95" />
+    <path d="M-44 -10h88M-52 20h104M-36 -40h72" stroke="#1e3a8a" stroke-width="10" stroke-linecap="round" />
+  </g>
+  <rect x="280" y="480" width="640" height="12" rx="6" fill="url(#line)" />
+  <text x="600" y="560" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="46" font-weight="700" fill="#0f172a">
+    Silk Road Hub
+  </text>
+  <text x="600" y="610" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="26" fill="#334155">
+    Offline preview image fallback
+  </text>
+</svg>

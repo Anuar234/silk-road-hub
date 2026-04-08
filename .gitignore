@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+
+# Build output
+.next
+out
+dist
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test results
+test-results
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment
+*.local
+.env*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.cursor
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
