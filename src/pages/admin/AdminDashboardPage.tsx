@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, CheckCircle2, Clock3, FileText, ShoppingBag } from 'lucide-react'
-import { Badge } from '../../components/ui/Badge'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { getAdminFunnel, getAverageDocumentPreparationDays, getAverageMessageToDealHours, getAverageResponseHours, getStatusCounts, getTopProductsByDeals, getTopSellersByDeals } from '../../data/adminData'
-import { DEAL_STATUS_LABELS, DEAL_STATUS_TONE, getAllDeals } from '../../data/dealData'
-import { usePlatformDataVersion } from '../../hooks/usePlatformDataVersion'
-import { getProblemDeals } from '../../data/platformSelectors'
+import { Badge } from '@shared/ui/Badge'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { getAdminFunnel, getAverageDocumentPreparationDays, getAverageMessageToDealHours, getAverageResponseHours, getStatusCounts, getTopProductsByDeals, getTopSellersByDeals } from '@features/admin/adminData'
+import { DEAL_STATUS_LABELS, DEAL_STATUS_TONE, getAllDeals } from '@features/deals/dealData'
+import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
+import { getProblemDeals } from '@features/platform/platformSelectors'
 
 export function AdminDashboardPage() {
   const version = usePlatformDataVersion()

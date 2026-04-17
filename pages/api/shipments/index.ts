@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { assertCsrf, requireSession } from '../_lib/authServer'
-import { getAllShipments, getShipmentsByDeal, createShipment } from '../../../src/data/logisticsData'
+import { getAllShipments, getShipmentsByDeal, createShipment } from '@features/logistics/logisticsData'
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') return handleGet(req, res)

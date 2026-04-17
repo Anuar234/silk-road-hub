@@ -1,5 +1,5 @@
-import { CATALOG_COUNTRIES, KZ_REGIONS, getSectorById, getSubcategoryById } from '../../data/catalogStructure'
-import type { Product, ResponseTimeBucket, Seller, TrustBadge } from '../../data/mockData'
+import { CATALOG_COUNTRIES, KZ_REGIONS, getSectorById, getSubcategoryById } from '@features/catalog/catalogStructure'
+import type { Product, ResponseTimeBucket, Seller, TrustBadge } from '@mocks/mockData'
 
 /**
  * This module is the catalog URL contract.

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { assertCsrf, requireSession } from '../_lib/authServer'
-import { getInvestmentById, updateInvestmentProject } from '../../../src/data/investmentData'
-import type { InvestmentProject } from '../../../src/data/investmentData'
+import { getInvestmentById, updateInvestmentProject } from '@features/investments/investmentData'
+import type { InvestmentProject } from '@features/investments/investmentData'
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const id = req.query.id as string

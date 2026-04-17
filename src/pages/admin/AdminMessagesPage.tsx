@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MessageSquare, Send } from 'lucide-react'
-import { Badge } from '../../components/ui/Badge'
-import { Button } from '../../components/ui/Button'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { Input } from '../../components/ui/Input'
-import { getAdminMessagesView } from '../../data/adminData'
-import { DEAL_STATUS_LABELS, DEAL_STATUS_TONE } from '../../data/dealData'
-import { addMessage } from '../../data/messagingData'
-import { usePlatformDataVersion } from '../../hooks/usePlatformDataVersion'
+import { Badge } from '@shared/ui/Badge'
+import { Button } from '@shared/ui/Button'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { Input } from '@shared/ui/Input'
+import { getAdminMessagesView } from '@features/admin/adminData'
+import { DEAL_STATUS_LABELS, DEAL_STATUS_TONE } from '@features/deals/dealData'
+import { addMessage } from '@features/messaging/messagingData'
+import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 
 export function AdminMessagesPage() {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)

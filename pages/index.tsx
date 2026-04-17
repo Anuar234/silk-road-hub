@@ -1,4 +1,4 @@
-import { ClientAppShell } from '../src/next/ClientAppShell'
+import { ClientAppShell } from '@app/ClientAppShell'
 
 /**
  * Next.js root page delegates rendering to the compatibility shell so the

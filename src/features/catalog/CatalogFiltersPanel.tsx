@@ -1,9 +1,9 @@
 import { Filter, X } from 'lucide-react'
-import { CATALOG_COUNTRIES, CATALOG_SECTORS, KZ_REGIONS, getSectorById } from '../../data/catalogStructure'
-import { Input } from '../../components/ui/Input'
-import { Button } from '../../components/ui/Button'
-import { Badge } from '../../components/ui/Badge'
-import { cx } from '../../components/utils/cx'
+import { CATALOG_COUNTRIES, CATALOG_SECTORS, KZ_REGIONS, getSectorById } from '@features/catalog/catalogStructure'
+import { Input } from '@shared/ui/Input'
+import { Button } from '@shared/ui/Button'
+import { Badge } from '@shared/ui/Badge'
+import { cx } from '@shared/lib/cx'
 import {
   type CatalogFilterChip,
   type CatalogFilterState,

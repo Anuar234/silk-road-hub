@@ -5,7 +5,7 @@ import {
   getDealById,
   updateDealStatus,
   updateDocumentStatus,
-} from '../../src/data/dealData'
+} from '@features/deals/dealData'
 
 describe('deal workflow contract', () => {
   it('creates a deal with the expected initial workflow shape', () => {

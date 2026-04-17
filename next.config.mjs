@@ -1,16 +1,20 @@
 /** @type {import('next').NextConfig} */
 const strictCspEnabled = process.env.CSP_STRICT_ENABLED === 'true'
 
+const isProduction = process.env.NODE_ENV === 'production'
+
 const baselineCsp = [
   "default-src 'self'",
   "base-uri 'self'",
   "frame-ancestors 'self'",
   "object-src 'none'",
-  "img-src 'self' data: https:",
+  "img-src 'self' data: blob: https:",
   "font-src 'self' data: https:",
   "style-src 'self' 'unsafe-inline' https:",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  // unsafe-eval is needed for Next.js dev mode; stripped in production
+  isProduction ? "script-src 'self' 'unsafe-inline'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "connect-src 'self' https:",
+  "form-action 'self'",
 ].join('; ')
 
 // Strict CSP requires per-request nonce to keep Next.js runtime working.
@@ -21,7 +25,10 @@ const API_BACKEND = process.env.API_BACKEND_URL || 'http://127.0.0.1:8080'
 
 const nextConfig = {
   images: {
-    unoptimized: true,
+    unoptimized: !isProduction,
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+    ],
   },
   async rewrites() {
     return [

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { assertCsrf, requireSession } from '../_lib/authServer'
-import { getAllContracts, getContractsByDeal, createContract } from '../../../src/data/contractData'
-import type { ContractTemplateType, ApplicableLaw, ContractDeadline } from '../../../src/data/contractData'
+import { getAllContracts, getContractsByDeal, createContract } from '@features/contracts/contractData'
+import type { ContractTemplateType, ApplicableLaw, ContractDeadline } from '@features/contracts/contractData'
 
 type CreateContractBody = {
   dealId?: string

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { assertCsrf, requireSession } from '../../_lib/authServer'
-import { getDealGuarantees, setDealGuarantee } from '../../../../src/data/dealData'
-import type { GuaranteeType } from '../../../../src/data/dealData'
+import { getDealGuarantees, setDealGuarantee } from '@features/deals/dealData'
+import type { GuaranteeType } from '@features/deals/dealData'
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const dealId = req.query.id as string

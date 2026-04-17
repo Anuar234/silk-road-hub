@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FileText } from 'lucide-react'
-import { Badge } from '../../components/ui/Badge'
-import { Button } from '../../components/ui/Button'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { DOC_STATUS_LABELS, DOC_STATUS_TONE, getAllDeals, getDealProduct, updateDocumentStatus, type DocStatus } from '../../data/dealData'
-import { usePlatformDataVersion } from '../../hooks/usePlatformDataVersion'
+import { Badge } from '@shared/ui/Badge'
+import { Button } from '@shared/ui/Button'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { DOC_STATUS_LABELS, DOC_STATUS_TONE, getAllDeals, getDealProduct, updateDocumentStatus, type DocStatus } from '@features/deals/dealData'
+import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 
 const DOC_FILTERS: Array<DocStatus | ''> = ['', 'requested', 'uploaded', 'under_review', 'approved', 'missing_info', 'rejected']
 

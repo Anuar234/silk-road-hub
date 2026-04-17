@@ -1,5 +1,5 @@
 import type { AppProps } from 'next/app'
-import '../src/index.css'
+import '@app/index.css'
 
 /**
  * Next entry point.

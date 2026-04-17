@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { assertCsrf, requireSession } from '../_lib/authServer'
-import { getContractById, updateContract } from '../../../src/data/contractData'
-import type { Contract } from '../../../src/data/contractData'
+import { getContractById, updateContract } from '@features/contracts/contractData'
+import type { Contract } from '@features/contracts/contractData'
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const id = req.query.id as string

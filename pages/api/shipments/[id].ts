@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { assertCsrf, requireSession } from '../_lib/authServer'
-import { getShipmentById, updateShipmentStage, addShipmentDocument } from '../../../src/data/logisticsData'
+import { getShipmentById, updateShipmentStage, addShipmentDocument } from '@features/logistics/logisticsData'
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const id = req.query.id as string

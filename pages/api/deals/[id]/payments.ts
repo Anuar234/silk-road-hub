@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { assertCsrf, requireSession } from '../../_lib/authServer'
-import { getPaymentPlan, createPaymentPlan, updatePaymentStage, DEFAULT_PAYMENT_STAGES } from '../../../../src/data/dealData'
+import { getPaymentPlan, createPaymentPlan, updatePaymentStage, DEFAULT_PAYMENT_STAGES } from '@features/deals/dealData'
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const dealId = req.query.id as string

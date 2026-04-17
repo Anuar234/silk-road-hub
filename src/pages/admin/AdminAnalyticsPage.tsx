@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { getAdminFunnel, getTopProductsByDeals, getTopSellersByDeals } from '../../data/adminData'
-import { getAllDeals } from '../../data/dealData'
-import { usePlatformDataVersion } from '../../hooks/usePlatformDataVersion'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { getAdminFunnel, getTopProductsByDeals, getTopSellersByDeals } from '@features/admin/adminData'
+import { getAllDeals } from '@features/deals/dealData'
+import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 
 export function AdminAnalyticsPage() {
   const version = usePlatformDataVersion()

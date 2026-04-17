@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { useDebounce } from '../../hooks/useDebounce'
-import { products, sellers } from '../../data/mockData'
+import { useDebounce } from '@shared/hooks/useDebounce'
+import { products, sellers } from '@mocks/mockData'
 import {
   type CatalogTab,
   DEFAULT_CATALOG_FILTERS,

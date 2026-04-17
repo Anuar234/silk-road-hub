@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { assertCsrf, registerUser, createSession, getUserPayload } from '../_lib/authServer'
+import { checkRateLimit } from '../_lib/rateLimit'
 
 type RegisterPayload = {
   email?: string
@@ -17,6 +18,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     res.setHeader('Allow', 'POST')
     return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' })
   }
+
+  if (!checkRateLimit(req, res, { prefix: 'register', maxRequests: 5, windowMs: 60_000 })) return
 
   if (!assertCsrf(req)) {
     return res.status(403).json({ error: 'CSRF_INVALID' })

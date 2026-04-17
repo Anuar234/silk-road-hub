@@ -1,10 +1,10 @@
 import { ArrowLeft, Edit3, ExternalLink, Package } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
-import { Badge } from '../../components/ui/Badge'
-import { ButtonLink } from '../../components/ui/ButtonLink'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { appProducts, type ProductStatus } from '../../data/appMockData'
-import { getTrustBadgeLabel } from '../../data/trustBadges'
+import { Badge } from '@shared/ui/Badge'
+import { ButtonLink } from '@shared/ui/ButtonLink'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { appProducts, type ProductStatus } from '@mocks/appMockData'
+import { getTrustBadgeLabel } from '@features/platform/trustBadges'
 
 function statusTone(status: ProductStatus) {
   switch (status) {

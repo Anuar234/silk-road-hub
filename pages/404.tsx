@@ -1,4 +1,4 @@
-import { ClientAppShell } from '../src/next/ClientAppShell'
+import { ClientAppShell } from '@app/ClientAppShell'
 
 /**
  * Even unknown static paths should land in the same client-side shell so that

@@ -1,6 +1,6 @@
 import { Bell, ShieldCheck, UserCog } from 'lucide-react'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { useAuth } from '../../auth/auth'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { useAuth } from '@features/auth/auth'
 
 export function AdminSettingsPage() {
   const auth = useAuth()

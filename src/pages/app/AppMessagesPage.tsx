@@ -1,13 +1,14 @@
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { buildFlashState } from '@shared/api/navigationState'
 import { FileText, Send, ShieldCheck, ShoppingBag } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { uploadDealFile } from '../../adapters/fileApi'
-import { Button } from '../../components/ui/Button'
-import { Badge } from '../../components/ui/Badge'
-import { Input } from '../../components/ui/Input'
-import { Textarea } from '../../components/ui/Textarea'
-import { useAuth } from '../../auth/auth'
-import { cx } from '../../components/utils/cx'
+import { uploadDealFile } from '@shared/api/fileApi'
+import { Button } from '@shared/ui/Button'
+import { Badge } from '@shared/ui/Badge'
+import { Input } from '@shared/ui/Input'
+import { Textarea } from '@shared/ui/Textarea'
+import { useAuth } from '@features/auth/auth'
+import { cx } from '@shared/lib/cx'
 import {
   findOrCreateThread,
   getThreadMessages,
@@ -16,13 +17,13 @@ import {
   addSystemMessage,
   getParticipantId,
   getSellerIdFromAuth,
-} from '../../data/messagingData'
-import { sellers } from '../../data/mockData'
-import { DealModal } from '../../components/deal/DealModal'
-import { addDealDocument, getDealById, updateDealFields, updateDealStatus, DEAL_STATUS_LABELS, DEAL_STATUS_TONE } from '../../data/dealData'
-import type { DocType } from '../../data/dealData'
-import { getThreadsForAuth } from '../../data/platformSelectors'
-import { usePlatformDataVersion } from '../../hooks/usePlatformDataVersion'
+} from '@features/messaging/messagingData'
+import { sellers } from '@mocks/mockData'
+import { DealModal } from '@widgets/deal/DealModal'
+import { addDealDocument, getDealById, updateDealFields, updateDealStatus, DEAL_STATUS_LABELS, DEAL_STATUS_TONE } from '@features/deals/dealData'
+import type { DocType } from '@features/deals/dealData'
+import { getThreadsForAuth } from '@features/platform/platformSelectors'
+import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 
 /**
  * Central communication surface for buyer, seller, and admin-linked deal flows.
@@ -149,7 +150,7 @@ export function AppMessagesPage() {
 
   const handleDealSuccess = (dealId: string) => {
     setShowDealModal(false)
-    navigate(`/app/deals/${dealId}`)
+    navigate(`/app/deals/${dealId}`, { state: buildFlashState('Сделка создана успешно.') })
   }
 
   const handleRequestAdmin = () => {
@@ -257,8 +258,8 @@ export function AppMessagesPage() {
               <div className="rounded-2xl border border-dashed border-border bg-slate-50 p-4 text-sm text-slate-500">
                 <div className="font-medium text-slate-900">Пока нет диалогов</div>
                 <div className="mt-1">Откройте каталог, выберите товар и нажмите «Написать продавцу», чтобы начать переписку.</div>
-                <Link to="/app/catalog" className="mt-3 inline-block text-sm font-medium text-brand-blue hover:underline">
-                  Перейти в каталог
+                <Link to="/app/catalog">
+                  <Button variant="secondary" size="sm" className="mt-3">Перейти в каталог</Button>
                 </Link>
               </div>
             </div>

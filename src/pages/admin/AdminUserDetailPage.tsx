@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Building2, MessageSquare, ShoppingBag } from 'lucide-react'
-import { Badge } from '../../components/ui/Badge'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { getAdminUserById } from '../../data/adminData'
-import { getAllDeals, getDealProduct, DEAL_STATUS_LABELS, DEAL_STATUS_TONE } from '../../data/dealData'
-import { usePlatformDataVersion } from '../../hooks/usePlatformDataVersion'
+import { Badge } from '@shared/ui/Badge'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { getAdminUserById } from '@features/admin/adminData'
+import { getAllDeals, getDealProduct, DEAL_STATUS_LABELS, DEAL_STATUS_TONE } from '@features/deals/dealData'
+import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 
 export function AdminUserDetailPage() {
   const { id } = useParams()

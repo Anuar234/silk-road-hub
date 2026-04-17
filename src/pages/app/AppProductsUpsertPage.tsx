@@ -1,13 +1,13 @@
 import type React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { buildFlashState } from '../../adapters/navigationState'
-import { apiCreateProduct, apiGetProduct, apiUpdateProduct, apiSubmitProductForModeration } from '../../adapters/productApi'
-import { Button } from '../../components/ui/Button'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { Input } from '../../components/ui/Input'
-import { Textarea } from '../../components/ui/Textarea'
-import { CATALOG_SECTORS, CATALOG_COUNTRIES, KZ_REGIONS } from '../../data/catalogStructure'
+import { buildFlashState } from '@shared/api/navigationState'
+import { apiCreateProduct, apiGetProduct, apiUpdateProduct, apiSubmitProductForModeration } from '@shared/api/productApi'
+import { Button } from '@shared/ui/Button'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { Input } from '@shared/ui/Input'
+import { Textarea } from '@shared/ui/Textarea'
+import { CATALOG_SECTORS, CATALOG_COUNTRIES, KZ_REGIONS } from '@features/catalog/catalogStructure'
 
 type Mode = 'create' | 'edit'
 
@@ -63,7 +63,17 @@ export function AppProductsUpsertPage({ mode }: { mode: Mode }) {
     }
   }, [mode, id])
 
+  function validateFields(): string | null {
+    if (!name.trim()) return 'Название товара обязательно'
+    if (!sectorId) return 'Выберите сектор каталога'
+    if (!subcategoryId) return 'Выберите подкатегорию'
+    if (leadTimeDays && (isNaN(Number(leadTimeDays)) || Number(leadTimeDays) < 0)) return 'Срок (дни) должен быть числом >= 0'
+    return null
+  }
+
   const handleSaveDraft = async () => {
+    const validationError = validateFields()
+    if (validationError) { setError(validationError); return }
     setSaving(true)
     setError(null)
     try {
@@ -81,6 +91,8 @@ export function AppProductsUpsertPage({ mode }: { mode: Mode }) {
   }
 
   const handleSubmitModeration = async () => {
+    const validationError = validateFields()
+    if (validationError) { setError(validationError); return }
     setSaving(true)
     setError(null)
     try {

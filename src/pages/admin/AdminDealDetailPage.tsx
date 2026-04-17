@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, Clock3, FileText, MessageSquare, Plus, Send, ShieldCheck } from 'lucide-react'
-import { Badge } from '../../components/ui/Badge'
-import { Button } from '../../components/ui/Button'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { Input } from '../../components/ui/Input'
-import { Textarea } from '../../components/ui/Textarea'
+import { Badge } from '@shared/ui/Badge'
+import { Button } from '@shared/ui/Button'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { Input } from '@shared/ui/Input'
+import { Textarea } from '@shared/ui/Textarea'
 import {
   addDealComment,
   DEAL_STATUS_LABELS,
@@ -24,9 +24,10 @@ import {
   type DealStatus,
   type DocStatus,
   type DocType,
-} from '../../data/dealData'
-import { getThreadMessages, addMessage, addSystemMessage } from '../../data/messagingData'
-import { usePlatformDataVersion } from '../../hooks/usePlatformDataVersion'
+} from '@features/deals/dealData'
+import { getThreadMessages, addMessage, addSystemMessage } from '@features/messaging/messagingData'
+import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
+import { ContractSection, LogisticsSection, PaymentSection, GuaranteesSection } from '@widgets/deal/DealSubSections'
 
 /**
  * Primary admin workflow screen.
@@ -62,6 +63,12 @@ export function AdminDealDetailPage() {
   const [docTarget, setDocTarget] = useState<'buyer' | 'seller'>('seller')
   const [docNote, setDocNote] = useState('')
   const [chatDraft, setChatDraft] = useState('')
+  const [toast, setToast] = useState<string | null>(null)
+
+  const showToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
 
   const deal = useMemo(() => getDealById(id ?? ''), [id, version])
   const product = useMemo(() => (deal ? getDealProduct(deal) : null), [deal])
@@ -113,6 +120,7 @@ export function AdminDealDetailPage() {
       assignedManager: managerInput.trim() || null,
       totalValue: valueInput.trim() || undefined,
     })
+    showToast('Метаданные сохранены')
   }
 
   const handleStatusUpdate = () => {
@@ -132,6 +140,7 @@ export function AdminDealDetailPage() {
       if (statusComment.trim()) addMessage(deal.threadId, 'admin-panel', 'admin', statusComment.trim())
     }
     setStatusComment('')
+    showToast(`Статус обновлён: ${DEAL_STATUS_LABELS[statusDraft]}`)
   }
 
   const handleAddInternalNote = () => {
@@ -145,6 +154,7 @@ export function AdminDealDetailPage() {
     })
     updateDealFields(deal.id, { internalNotes: internalNote.trim() })
     setInternalNote('')
+    showToast('Заметка добавлена')
   }
 
   const handleSendParticipantMessage = () => {
@@ -158,6 +168,7 @@ export function AdminDealDetailPage() {
       body: participantMessage.trim(),
     })
     if (deal.threadId) addMessage(deal.threadId, 'admin-panel', 'admin', participantMessage.trim())
+    showToast('Запрос отправлен')
     if (participantVisibility === 'buyer') {
       updateDealStatus(deal.id, 'waiting_buyer_info', managerInput.trim() || 'Администратор', 'Запрошена дополнительная информация у покупателя', 'admin')
     } else if (participantVisibility === 'seller') {
@@ -185,6 +196,7 @@ export function AdminDealDetailPage() {
     setDocName('')
     setDocType('contract')
     setDocNote('')
+    showToast('Документ запрошен')
   }
 
   const handleDocumentStatus = (docId: string, status: DocStatus) => {
@@ -211,6 +223,12 @@ export function AdminDealDetailPage() {
         <ArrowLeft className="size-4" />
         К списку сделок
       </Link>
+
+      {toast && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          {toast}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-bold text-slate-900">Сделка {deal.id}</h1>
@@ -289,6 +307,18 @@ export function AdminDealDetailPage() {
               {deal.documents.length === 0 && <p className="text-sm text-slate-500">Документы ещё не запрошены.</p>}
             </CardContent>
           </Card>
+
+          {/* Contract section */}
+          <ContractSection dealId={deal.id} version={version} />
+
+          {/* Logistics section */}
+          <LogisticsSection dealId={deal.id} version={version} />
+
+          {/* Payment stages */}
+          <PaymentSection dealId={deal.id} version={version} />
+
+          {/* Guarantees */}
+          <GuaranteesSection dealId={deal.id} version={version} />
         </div>
 
         <div className="space-y-6">

@@ -1,10 +1,10 @@
 import { Link, useLocation } from 'react-router-dom'
-import { getNavigationFlash } from '../../adapters/navigationState'
-import { Badge } from '../../components/ui/Badge'
-import { ButtonLink } from '../../components/ui/ButtonLink'
-import { Card, CardContent } from '../../components/ui/Card'
-import { cx } from '../../components/utils/cx'
-import { appProducts, type ProductStatus } from '../../data/appMockData'
+import { getNavigationFlash } from '@shared/api/navigationState'
+import { Badge } from '@shared/ui/Badge'
+import { ButtonLink } from '@shared/ui/ButtonLink'
+import { Card, CardContent } from '@shared/ui/Card'
+import { cx } from '@shared/lib/cx'
+import { appProducts, type ProductStatus } from '@mocks/appMockData'
 
 function statusTone(status: ProductStatus) {
   switch (status) {

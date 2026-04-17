@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
-import { Badge } from '../../components/ui/Badge'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { Input } from '../../components/ui/Input'
-import { DEAL_STATUS_LABELS, DEAL_STATUS_TONE, getAllDeals, getDealProduct, getDealSeller, type DealStatus } from '../../data/dealData'
-import { usePlatformDataVersion } from '../../hooks/usePlatformDataVersion'
+import { Badge } from '@shared/ui/Badge'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { Input } from '@shared/ui/Input'
+import { DEAL_STATUS_LABELS, DEAL_STATUS_TONE, getAllDeals, getDealProduct, getDealSeller, type DealStatus } from '@features/deals/dealData'
+import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 
 const STATUS_OPTIONS: Array<DealStatus | ''> = [
   '',

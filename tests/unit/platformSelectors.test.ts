@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { getExistingDealThreadForAuth, getThreadsForAuth } from '../../src/data/platformSelectors'
-import type { AuthState } from '../../src/auth/auth'
+import { getExistingDealThreadForAuth, getThreadsForAuth } from '@features/platform/platformSelectors'
+import type { AuthState } from '@features/auth/auth'
 
 const buyerAuth: AuthState = {
   isAuthenticated: true,

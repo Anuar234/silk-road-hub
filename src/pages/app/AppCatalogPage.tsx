@@ -1,19 +1,19 @@
 import { ChevronRight, Globe, Grid3X3, Search } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
-import { Badge } from '../../components/ui/Badge'
-import { ButtonLink } from '../../components/ui/ButtonLink'
-import { Card, CardContent } from '../../components/ui/Card'
-import { Input } from '../../components/ui/Input'
-import { Tabs } from '../../components/ui/Tabs'
-import { applyOfflineImageFallback } from '../../components/ui/imageFallback'
-import { cx } from '../../components/utils/cx'
-import { useAuth } from '../../auth/auth'
-import { CATALOG_COUNTRIES, CATALOG_SECTORS, getSectorById, getSubcategoryById } from '../../data/catalogStructure'
-import { getSellerIdFromAuth } from '../../data/messagingData'
-import { getTrustBadgeLabel } from '../../data/trustBadges'
-import { CatalogActiveFilters, CatalogEmptyState, CatalogFiltersPanel } from '../../features/catalog/CatalogFiltersPanel'
-import { type CatalogTab } from '../../features/catalog/catalogFilters'
-import { useCatalogController } from '../../features/catalog/useCatalogController'
+import { Badge } from '@shared/ui/Badge'
+import { ButtonLink } from '@shared/ui/ButtonLink'
+import { Card, CardContent } from '@shared/ui/Card'
+import { Input } from '@shared/ui/Input'
+import { Tabs } from '@shared/ui/Tabs'
+import { applyOfflineImageFallback } from '@shared/ui/imageFallback'
+import { cx } from '@shared/lib/cx'
+import { useAuth } from '@features/auth/auth'
+import { CATALOG_COUNTRIES, CATALOG_SECTORS, getSectorById, getSubcategoryById } from '@features/catalog/catalogStructure'
+import { getSellerIdFromAuth } from '@features/messaging/messagingData'
+import { getTrustBadgeLabel } from '@features/platform/trustBadges'
+import { CatalogActiveFilters, CatalogEmptyState, CatalogFiltersPanel } from '@features/catalog/CatalogFiltersPanel'
+import { type CatalogTab } from '@features/catalog/catalogFilters'
+import { useCatalogController } from '@features/catalog/useCatalogController'
 
 export function AppCatalogPage() {
   const location = useLocation()
@@ -282,13 +282,14 @@ export function AppCatalogPage() {
                 <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredProducts.map((product) => (
                     <Card key={product.id} className="overflow-hidden transition-shadow hover:shadow-md">
-                      <div className="aspect-[16/10] overflow-hidden bg-slate-100">
+                      <div className="aspect-[16/10] overflow-hidden bg-slate-100 animate-pulse">
                         <img
                           src={product.imageUrl}
                           alt={product.name}
-                          className="h-full w-full object-cover transition-transform duration-200 hover:scale-[1.02]"
+                          className="h-full w-full object-cover animate-none transition-transform duration-200 hover:scale-[1.02]"
                           loading="lazy"
-                          onError={applyOfflineImageFallback}
+                          onLoad={(e) => { e.currentTarget.parentElement?.classList.remove('animate-pulse') }}
+                          onError={(e) => { e.currentTarget.parentElement?.classList.remove('animate-pulse'); applyOfflineImageFallback(e) }}
                         />
                       </div>
                       <CardContent className="grid gap-2">

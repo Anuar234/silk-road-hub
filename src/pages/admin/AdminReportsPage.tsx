@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { downloadBlob } from '../../adapters/browserFiles'
-import { Badge } from '../../components/ui/Badge'
-import { Button } from '../../components/ui/Button'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { DEAL_STATUS_LABELS, DEAL_STATUS_TONE, getAllDeals, getDealProduct, getDealSeller, type DealStatus } from '../../data/dealData'
-import { usePlatformDataVersion } from '../../hooks/usePlatformDataVersion'
+import { downloadBlob } from '@shared/api/browserFiles'
+import { Badge } from '@shared/ui/Badge'
+import { Button } from '@shared/ui/Button'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { DEAL_STATUS_LABELS, DEAL_STATUS_TONE, getAllDeals, getDealProduct, getDealSeller, type DealStatus } from '@features/deals/dealData'
+import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 
 export function AdminReportsPage() {
   const [statusFilter, setStatusFilter] = useState<DealStatus | ''>('')
@@ -81,12 +81,12 @@ export function AdminReportsPage() {
       <Card>
         <CardHeader title={`Результаты (${filtered.length})`} subtitle={totalValue ? `Общая сумма: $${totalValue.toLocaleString()}` : 'Общая сумма: —'} />
         <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs font-medium uppercase text-slate-500">
                 <th className="pb-3 pr-4">Сделка</th>
                 <th className="pb-3 pr-4">Товар</th>
-                <th className="pb-3 pr-4">Продавец</th>
+                <th className="hidden pb-3 pr-4 sm:table-cell">Продавец</th>
                 <th className="pb-3 pr-4">Страна</th>
                 <th className="pb-3 pr-4">Сумма</th>
                 <th className="pb-3 pr-4">Документы</th>
@@ -106,7 +106,7 @@ export function AdminReportsPage() {
                       <div className="text-xs text-slate-500">{new Date(deal.createdAt).toLocaleDateString('ru-RU')}</div>
                     </td>
                     <td className="py-3 pr-4 font-medium text-slate-900">{product?.name ?? '—'}</td>
-                    <td className="py-3 pr-4 text-slate-700">{seller?.name ?? '—'}</td>
+                    <td className="hidden py-3 pr-4 text-slate-700 sm:table-cell">{seller?.name ?? '—'}</td>
                     <td className="py-3 pr-4 text-slate-700">{deal.destinationCountry}</td>
                     <td className="py-3 pr-4 text-slate-700">{deal.totalValue ?? '—'}</td>
                     <td className="py-3 pr-4 text-slate-700">{deal.documents.length}</td>

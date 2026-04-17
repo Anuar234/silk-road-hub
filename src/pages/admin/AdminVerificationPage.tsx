@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { CheckCircle, XCircle, Clock, Users } from 'lucide-react'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { Badge } from '../../components/ui/Badge'
-import { Button } from '../../components/ui/Button'
-import { apiGetUsers, apiVerifyUser } from '../../adapters/usersApi'
-import type { ApiUser, VerificationStatus } from '../../adapters/authApi'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { Badge } from '@shared/ui/Badge'
+import { Button } from '@shared/ui/Button'
+import { apiGetUsers, apiVerifyUser } from '@shared/api/usersApi'
+import type { ApiUser, VerificationStatus } from '@shared/api/authApi'
 
 export function AdminVerificationPage() {
   const [users, setUsers] = useState<ApiUser[]>([])

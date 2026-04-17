@@ -1,5 +1,6 @@
 import http from 'node:http'
 import { promises as fs } from 'node:fs'
+import { execSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -90,8 +91,13 @@ async function start() {
   const host = process.env.HOST ?? '127.0.0.1'
 
   if (!(await fileExists(path.join(distDir, 'index.html')))) {
-    console.error(`out/index.html not found. Run: npm run build`)
-    process.exit(1)
+    console.log('⚠ out/index.html не найден. Запускаю сборку (npm run build)...')
+    try {
+      execSync('npm run build', { stdio: 'inherit', cwd: path.resolve(__dirname, '..') })
+    } catch {
+      console.error('❌ Сборка не удалась. Проверьте ошибки выше.')
+      process.exit(1)
+    }
   }
 
   for (let port = requested; port < requested + 20; port++) {

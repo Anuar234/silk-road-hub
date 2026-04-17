@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { assertCsrf, requireSession } from '../_lib/authServer'
-import { investmentProjects, addInvestmentProject } from '../../../src/data/investmentData'
-import type { InvestmentProject } from '../../../src/data/investmentData'
+import { investmentProjects, addInvestmentProject } from '@features/investments/investmentData'
+import type { InvestmentProject } from '@features/investments/investmentData'
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') return handleGet(req, res)

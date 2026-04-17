@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Package } from 'lucide-react'
-import { Badge } from '../../components/ui/Badge'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { Input } from '../../components/ui/Input'
-import { getCatalogProductsForAdmin } from '../../data/adminData'
-import { usePlatformDataVersion } from '../../hooks/usePlatformDataVersion'
+import { Badge } from '@shared/ui/Badge'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { Input } from '@shared/ui/Input'
+import { getCatalogProductsForAdmin } from '@features/admin/adminData'
+import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 
 export function AdminCatalogPage() {
   const [search, setSearch] = useState('')
@@ -54,7 +54,7 @@ export function AdminCatalogPage() {
       <Card>
         <CardHeader title={`Товары в каталоге (${filtered.length})`} subtitle="Admin oversight по всем карточкам каталога" />
         <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs font-medium uppercase text-slate-500">
                 <th className="pb-3 pr-4">Товар</th>

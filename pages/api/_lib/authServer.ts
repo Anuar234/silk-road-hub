@@ -348,6 +348,28 @@ export function updateUserVerification(userId: string, status: VerificationStatu
   return null
 }
 
+export type ProfileUpdates = {
+  displayName?: string
+  phone?: string
+  companyName?: string
+  bin?: string
+  position?: string
+}
+
+export function updateUserProfile(userId: string, updates: ProfileUpdates): ServerUser | null {
+  for (const record of registeredUsers.values()) {
+    if (record.user.id === userId) {
+      if (updates.displayName !== undefined) record.user.displayName = updates.displayName.trim()
+      if (updates.phone !== undefined) record.user.phone = updates.phone.trim() || null
+      if (updates.companyName !== undefined) record.user.companyName = updates.companyName.trim() || null
+      if (updates.bin !== undefined) record.user.bin = updates.bin.trim() || null
+      if (updates.position !== undefined) record.user.position = updates.position.trim() || null
+      return record.user
+    }
+  }
+  return null
+}
+
 export function addUserCompanyDoc(userId: string, fileId: string): boolean {
   for (const record of registeredUsers.values()) {
     if (record.user.id === userId) {

@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { getAverageDocumentPreparationDays, getAverageMessageToDealHours, getAverageResponseHours, getStatusCounts } from '../../data/adminData'
-import { DEAL_STATUS_LABELS, DEAL_STATUS_TONE, getAllDeals, getDealProduct } from '../../data/dealData'
-import { CATALOG_SECTORS } from '../../data/catalogStructure'
-import { usePlatformDataVersion } from '../../hooks/usePlatformDataVersion'
+import { Card, CardContent, CardHeader } from '@shared/ui/Card'
+import { getAverageDocumentPreparationDays, getAverageMessageToDealHours, getAverageResponseHours, getStatusCounts } from '@features/admin/adminData'
+import { DEAL_STATUS_LABELS, DEAL_STATUS_TONE, getAllDeals, getDealProduct } from '@features/deals/dealData'
+import { CATALOG_SECTORS } from '@features/catalog/catalogStructure'
+import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 
 export function AdminStatisticsPage() {
   const version = usePlatformDataVersion()
