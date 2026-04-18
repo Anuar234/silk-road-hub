@@ -255,10 +255,23 @@ export function LandingPage() {
               </div>
             </div>
 
-            <AnalyticsPreviewCard />
+            <GeneralPartnersCarousel partners={GENERAL_PARTNERS} />
           </div>
+        </Container>
+      </section>
 
-          <GeneralPartnersCarousel partners={GENERAL_PARTNERS} />
+      <section className="border-b border-border bg-slate-50/60">
+        <Container className="py-12 sm:py-16">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Как это работает</div>
+              <h2 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">В одном процессе: поиск → переговоры → сделка → документы</h2>
+              <p className="mt-2 max-w-2xl text-sm text-slate-600">
+                Доступ — по подтверждению компании. Переписка, DealCase и статусы фиксируют договорённости и передают кейс в обработку администрации.
+              </p>
+            </div>
+          </div>
+          <AnalyticsPreviewCard />
         </Container>
       </section>
 
@@ -282,7 +295,9 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <PartnersNewsCarousel partners={MODEST_PARTNERS} />
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-3">
             <Card>
               <CardHeader title="Метки доверия" subtitle="Статусы и документы компании: проверен, ISO, Halal и др." />
               <CardContent>
@@ -316,8 +331,6 @@ export function LandingPage() {
               </CardContent>
             </Card>
           </div>
-
-          <PartnersNewsCarousel partners={MODEST_PARTNERS} />
         </Container>
       </section>
     </div>
@@ -465,55 +478,55 @@ function GeneralPartnersCarousel({ partners }: { partners: GeneralPartner[] }) {
   const [index, setIndex] = useAutoSlide(partners.length, SLIDE_INTERVAL_MS)
 
   return (
-    <div className="mt-12">
-      <div className="mb-3 flex items-end justify-between">
+    <div className="animate-text-reveal animate-text-reveal-delay-3 rounded-2xl border border-border bg-white opacity-0 motion-card overflow-hidden">
+      <div className="flex items-center justify-between border-b border-border bg-brand-yellow-soft px-5 py-4">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Генеральные партнёры</div>
-          <div className="mt-1 text-sm text-slate-600">Институциональная поддержка экспорта — в каждой сделке SRH.</div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-slate-700">Генеральные партнёры</div>
+          <div className="mt-0.5 text-[12px] text-slate-700">Институциональная поддержка экспорта</div>
         </div>
-        <div className="text-[11px] text-slate-500">
+        <div className="text-[11px] font-medium text-slate-600">
           {index + 1} / {partners.length}
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-white">
+      <div className="relative overflow-hidden">
         <div
           className="flex transition-transform duration-700 ease-out"
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
           {partners.map((p) => (
             <div key={p.id} className="w-full shrink-0">
-              <div className={cx('flex flex-col items-center gap-4 bg-gradient-to-br px-6 py-8 sm:flex-row sm:gap-6 sm:px-8', p.accent)}>
+              <div className={cx('flex flex-col items-center gap-4 bg-gradient-to-br px-6 py-7 text-center', p.accent)}>
                 <div className="grid size-16 place-items-center rounded-2xl bg-white text-lg font-bold text-slate-900 shadow-sm ring-1 ring-border">
                   {p.initials}
                 </div>
-                <div className="flex-1 text-center sm:text-left">
+                <div>
                   <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-border">
                     <Sparkles className="size-3 text-brand-yellow" />
                     {p.badge}
                   </div>
-                  <div className="mt-2 text-xl font-semibold text-slate-900">{p.name}</div>
+                  <div className="mt-3 text-xl font-semibold text-slate-900">{p.name}</div>
                   <div className="mt-1 text-sm text-slate-600">{p.tagline}</div>
                 </div>
               </div>
             </div>
           ))}
         </div>
+      </div>
 
-        <div className="flex items-center justify-center gap-1.5 border-t border-border bg-white px-4 py-3">
-          {partners.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setIndex(i)}
-              className={cx(
-                'h-1.5 rounded-full transition-all duration-300',
-                i === index ? 'w-8 bg-brand-blue' : 'w-1.5 bg-slate-300 hover:bg-slate-400',
-              )}
-              aria-label={`Показать партнёра ${p.name}`}
-            />
-          ))}
-        </div>
+      <div className="flex items-center justify-center gap-1.5 border-t border-border px-4 py-3">
+        {partners.map((p, i) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => setIndex(i)}
+            className={cx(
+              'h-1.5 rounded-full transition-all duration-300',
+              i === index ? 'w-8 bg-brand-blue' : 'w-1.5 bg-slate-300 hover:bg-slate-400',
+            )}
+            aria-label={`Показать партнёра ${p.name}`}
+          />
+        ))}
       </div>
     </div>
   )
