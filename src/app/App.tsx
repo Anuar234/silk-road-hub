@@ -38,6 +38,7 @@ const AppProductsDetailPage = lazy(async () => ({ default: (await import('@pages
 const AppProductsListPage = lazy(async () => ({ default: (await import('@pages/app/AppProductsListPage')).AppProductsListPage }))
 const AppProductsUpsertPage = lazy(async () => ({ default: (await import('@pages/app/AppProductsUpsertPage')).AppProductsUpsertPage }))
 const AppSettingsPage = lazy(async () => ({ default: (await import('@pages/app/AppSettingsPage')).AppSettingsPage }))
+const AppInvestmentRequestsPage = lazy(async () => ({ default: (await import('@pages/app/AppInvestmentRequestsPage')).AppInvestmentRequestsPage }))
 
 const AdminDashboardPage = lazy(async () => ({ default: (await import('@pages/admin/AdminDashboardPage')).AdminDashboardPage }))
 const AdminDealsPage = lazy(async () => ({ default: (await import('@pages/admin/AdminDealsPage')).AdminDealsPage }))
@@ -54,6 +55,7 @@ const AdminCatalogProductPage = lazy(async () => ({ default: (await import('@pag
 const AdminSettingsPage = lazy(async () => ({ default: (await import('@pages/admin/AdminSettingsPage')).AdminSettingsPage }))
 const AdminVerificationPage = lazy(async () => ({ default: (await import('@pages/admin/AdminVerificationPage')).AdminVerificationPage }))
 const AdminInvestmentsPage = lazy(async () => ({ default: (await import('@pages/admin/AdminInvestmentsPage')).AdminInvestmentsPage }))
+const AdminAuditLogPage = lazy(async () => ({ default: (await import('@pages/admin/AdminAuditLogPage')).AdminAuditLogPage }))
 
 /**
  * Canonical route tree for the product.
@@ -104,6 +106,7 @@ export default function App() {
                 <Route path="deals/:id" element={<AppDealDetailPage />} />
                 <Route path="settings" element={<AppSettingsPage />} />
                 <Route path="verification" element={<VerificationPage />} />
+                <Route path="investment-requests" element={<AppInvestmentRequestsPage />} />
               </Route>
             </Route>
 
@@ -125,6 +128,7 @@ export default function App() {
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="verification" element={<AdminVerificationPage />} />
                 <Route path="investments" element={<AdminInvestmentsPage />} />
+                <Route path="audit-log" element={<AdminAuditLogPage />} />
                 {/* Legacy redirect */}
                 <Route path="purchase-intents" element={<Navigate to="/admin/deals" replace />} />
                 <Route path="purchase-intents/:id" element={<Navigate to="/admin/deals" replace />} />

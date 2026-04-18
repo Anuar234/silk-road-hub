@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BarChart3, Building2, FileText, FolderOpen, LayoutDashboard, LogOut, MessagesSquare, PieChart, Settings, Shield, Users, Package } from 'lucide-react'
+import { BarChart3, Building2, FileText, FolderOpen, History, LayoutDashboard, LogOut, MessagesSquare, PieChart, Settings, Shield, Users, Package } from 'lucide-react'
 import { Logo } from '@shared/ui/Logo'
 import { useAuth } from '@features/auth/auth'
 import { Button } from '@shared/ui/Button'
@@ -16,6 +16,7 @@ const sideItems = [
   { to: '/admin/statistics', label: 'Статистика', icon: BarChart3 },
   { to: '/admin/analytics', label: 'Аналитика', icon: PieChart },
   { to: '/admin/reports', label: 'Отчёты', icon: FileText },
+  { to: '/admin/audit-log', label: 'Журнал действий', icon: History },
   { to: '/admin/settings', label: 'Настройки', icon: Settings },
 ] as const
 

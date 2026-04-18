@@ -20,12 +20,15 @@ import (
 	"github.com/silkroadhub/backend/internal/config"
 	"github.com/silkroadhub/backend/internal/middleware"
 	"github.com/silkroadhub/backend/internal/module/analytics"
+	"github.com/silkroadhub/backend/internal/module/audit"
 	"github.com/silkroadhub/backend/internal/module/auth"
 	"github.com/silkroadhub/backend/internal/module/contract"
 	"github.com/silkroadhub/backend/internal/module/deal"
 	"github.com/silkroadhub/backend/internal/module/file"
 	"github.com/silkroadhub/backend/internal/module/investment"
+	"github.com/silkroadhub/backend/internal/module/investmentrequest"
 	"github.com/silkroadhub/backend/internal/module/product"
+	"github.com/silkroadhub/backend/internal/module/reference"
 	"github.com/silkroadhub/backend/internal/module/shipment"
 	"github.com/silkroadhub/backend/internal/module/user"
 	"github.com/silkroadhub/backend/internal/session"
@@ -89,6 +92,11 @@ func main() {
 	api := r.Group("/api")
 	api.Use(middleware.CSRF())
 
+	// --- Audit log (middleware applied to all /api/* routes below) ---
+	auditRepo := audit.NewRepository(pool)
+	auditSvc := audit.NewService(auditRepo)
+	api.Use(audit.Middleware(auditSvc))
+
 	// --- Modules ---
 	authRepo := auth.NewRepository(pool)
 	authSvc := auth.NewService(authRepo)
@@ -110,6 +118,10 @@ func main() {
 	investSvc := investment.NewService(investRepo)
 	investment.RegisterRoutes(api, investSvc, sessStore)
 
+	invReqRepo := investmentrequest.NewRepository(pool)
+	invReqSvc := investmentrequest.NewService(invReqRepo)
+	investmentrequest.RegisterRoutes(api, invReqSvc, sessStore)
+
 	contractRepo := contract.NewRepository(pool)
 	contractSvc := contract.NewService(contractRepo)
 	contract.RegisterRoutes(api, contractSvc, sessStore)
@@ -123,6 +135,11 @@ func main() {
 	deal.RegisterRoutes(api, dealSvc, sessStore)
 
 	analytics.RegisterRoutes(api, pool, sessStore)
+	audit.RegisterRoutes(api, auditSvc, sessStore)
+
+	refRepo := reference.NewRepository(pool)
+	refSvc := reference.NewService(refRepo)
+	reference.RegisterRoutes(api, refSvc)
 
 	// --- Server ---
 	addr := fmt.Sprintf(":%d", cfg.Port)

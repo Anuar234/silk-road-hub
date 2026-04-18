@@ -30,5 +30,6 @@ export async function uploadDealFile(file: File): Promise<UploadedFilePayload> {
     }
     throw new Error('Не удалось загрузить файл на сервер.')
   }
-  return (await res.json()) as UploadedFilePayload
+  const body = (await res.json()) as { ok: true; data: UploadedFilePayload }
+  return body.data
 }

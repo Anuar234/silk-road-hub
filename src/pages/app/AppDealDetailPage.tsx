@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader } from '@shared/ui/Card'
 import { Badge } from '@shared/ui/Badge'
 import { Button } from '@shared/ui/Button'
 import { ContractSection, LogisticsSection, PaymentSection, GuaranteesSection } from '@widgets/deal/DealSubSections'
+import { DealChat } from '@features/deals/DealChat'
+import { DealDocumentsRemote } from '@features/deals/DealDocumentsRemote'
 import { useAuth } from '@features/auth/auth'
 import { getDealById, getDealProduct, getDealSeller, updateDealStatus, DEAL_STATUS_LABELS, DEAL_STATUS_TONE, DOC_STATUS_LABELS } from '@features/deals/dealData'
 import { addMessage, addSystemMessage } from '@features/messaging/messagingData'
@@ -161,6 +163,10 @@ export function AppDealDetailPage() {
       <LogisticsSection dealId={deal.id} version={version} />
       <PaymentSection dealId={deal.id} version={version} />
       <GuaranteesSection dealId={deal.id} version={version} />
+
+      {/* LOI/MOU documents and chat backed by Go API (ТЗ 5.3) */}
+      <DealDocumentsRemote dealId={deal.id} />
+      <DealChat dealId={deal.id} />
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3">

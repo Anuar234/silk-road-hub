@@ -16,5 +16,10 @@ func RegisterRoutes(api *gin.RouterGroup, svc *Service, store *session.Store) {
 		deals.PUT("/:id/payments", h.UpdatePaymentStage)
 		deals.GET("/:id/guarantees", h.GetGuarantees)
 		deals.PUT("/:id/guarantees", h.SetGuarantee)
+
+		deals.GET("/:id/comments", h.ListComments)
+		deals.POST("/:id/comments", h.CreateComment)
+		deals.GET("/:id/documents", h.ListDocuments)
+		deals.POST("/:id/documents", h.CreateDocument)
 	}
 }

@@ -64,7 +64,7 @@ export type RegisterArgs = {
   email: string
   password: string
   displayName: string
-  role: 'buyer' | 'seller'
+  role: 'buyer' | 'seller' | 'investor'
   phone?: string
   companyName?: string
   bin?: string

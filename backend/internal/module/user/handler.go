@@ -25,6 +25,24 @@ func (h *Handler) List(c *gin.Context) {
 	apierror.OK(c, http.StatusOK, users)
 }
 
+func (h *Handler) UpdateRole(c *gin.Context) {
+	id := c.Param("id")
+	var body struct {
+		Role string `json:"role" binding:"required,oneof=buyer seller investor institutional admin"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		apierror.BadRequest(c, err.Error())
+		return
+	}
+
+	u, err := h.svc.UpdateRole(c.Request.Context(), id, body.Role)
+	if err != nil {
+		apierror.BadRequest(c, err.Error())
+		return
+	}
+	apierror.OK(c, http.StatusOK, u)
+}
+
 func (h *Handler) Verify(c *gin.Context) {
 	id := c.Param("id")
 	var body struct {
@@ -35,12 +53,13 @@ func (h *Handler) Verify(c *gin.Context) {
 		return
 	}
 
-	if err := h.svc.Verify(c.Request.Context(), id, body.Status); err != nil {
+	u, err := h.svc.Verify(c.Request.Context(), id, body.Status)
+	if err != nil {
 		apierror.BadRequest(c, err.Error())
 		return
 	}
 
-	apierror.OK(c, http.StatusOK, nil)
+	apierror.OK(c, http.StatusOK, u)
 }
 
 func (h *Handler) AttachDoc(c *gin.Context) {
@@ -64,10 +83,11 @@ func (h *Handler) AttachDoc(c *gin.Context) {
 		return
 	}
 
-	if err := h.svc.AttachDoc(c.Request.Context(), id, body.FileID); err != nil {
+	u, err := h.svc.AttachDoc(c.Request.Context(), id, body.FileID)
+	if err != nil {
 		apierror.BadRequest(c, err.Error())
 		return
 	}
 
-	apierror.OK(c, http.StatusOK, nil)
+	apierror.OK(c, http.StatusOK, u)
 }

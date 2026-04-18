@@ -11,12 +11,15 @@ import { appProducts } from '@mocks/appMockData'
 import { getDealsForAuth, getUnreadCountForAuth } from '@features/platform/platformSelectors'
 import { getSellerIdFromAuth } from '@features/messaging/messagingData'
 import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
+import { AppInvestorHomePage } from '@pages/app/AppInvestorHomePage'
+import { AppInstitutionalHomePage } from '@pages/app/AppInstitutionalHomePage'
 
 export function AppHomePage() {
   const auth = useAuth()
-  const isSeller = auth.role === 'seller'
 
-  if (isSeller) return <SellerDashboard />
+  if (auth.role === 'seller') return <SellerDashboard />
+  if (auth.role === 'investor') return <AppInvestorHomePage />
+  if (auth.role === 'institutional') return <AppInstitutionalHomePage />
   return <BuyerDashboard />
 }
 

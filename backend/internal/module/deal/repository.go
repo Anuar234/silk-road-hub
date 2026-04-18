@@ -126,3 +126,90 @@ func (r *Repository) SetGuarantee(ctx context.Context, g *Guarantee) error {
 	)
 	return err
 }
+
+// --- Comments ---
+
+func (r *Repository) ListComments(ctx context.Context, dealID string) ([]*Comment, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, deal_id, type, visibility, author, author_role, body, created_at
+		FROM deal_comments WHERE deal_id = $1 ORDER BY created_at ASC`, dealID)
+	if err != nil {
+		return nil, fmt.Errorf("list comments: %w", err)
+	}
+	defer rows.Close()
+
+	out := []*Comment{}
+	for rows.Next() {
+		var c Comment
+		if err := rows.Scan(&c.ID, &c.DealID, &c.Type, &c.Visibility, &c.Author,
+			&c.AuthorRole, &c.Body, &c.CreatedAt); err != nil {
+			return nil, fmt.Errorf("scan comment: %w", err)
+		}
+		out = append(out, &c)
+	}
+	return out, nil
+}
+
+func (r *Repository) findCommentByID(ctx context.Context, id string) (*Comment, error) {
+	var c Comment
+	err := r.pool.QueryRow(ctx, `
+		SELECT id, deal_id, type, visibility, author, author_role, body, created_at
+		FROM deal_comments WHERE id = $1`, id).Scan(
+		&c.ID, &c.DealID, &c.Type, &c.Visibility, &c.Author, &c.AuthorRole, &c.Body, &c.CreatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("find comment: %w", err)
+	}
+	return &c, nil
+}
+
+func (r *Repository) CreateComment(ctx context.Context, c *Comment) error {
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO deal_comments (id, deal_id, type, visibility, author, author_role, body)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		c.ID, c.DealID, c.Type, c.Visibility, c.Author, c.AuthorRole, c.Body,
+	)
+	if err != nil {
+		return fmt.Errorf("insert comment: %w", err)
+	}
+	return nil
+}
+
+// --- Documents ---
+
+func (r *Repository) ListDocuments(ctx context.Context, dealID string) ([]*Document, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, deal_id, name, type, status, uploaded_by_role, uploaded_at, note,
+		       source_file_name, source_file_size, file_id::text
+		FROM deal_documents WHERE deal_id = $1 ORDER BY uploaded_at DESC NULLS LAST, name`, dealID)
+	if err != nil {
+		return nil, fmt.Errorf("list documents: %w", err)
+	}
+	defer rows.Close()
+
+	out := []*Document{}
+	for rows.Next() {
+		var d Document
+		if err := rows.Scan(&d.ID, &d.DealID, &d.Name, &d.Type, &d.Status, &d.UploadedByRole,
+			&d.UploadedAt, &d.Note, &d.SourceFileName, &d.SourceFileSize, &d.FileID); err != nil {
+			return nil, fmt.Errorf("scan document: %w", err)
+		}
+		out = append(out, &d)
+	}
+	return out, nil
+}
+
+func (r *Repository) CreateDocument(ctx context.Context, d *Document) error {
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO deal_documents (
+		    id, deal_id, name, type, status, uploaded_by_role, uploaded_at,
+		    note, source_file_name, source_file_size, file_id
+		) VALUES ($1, $2, $3, $4, 'uploaded', $5, NOW(), $6, $7, $8, $9::uuid)`,
+		d.ID, d.DealID, d.Name, d.Type, d.UploadedByRole, d.Note,
+		d.SourceFileName, d.SourceFileSize, d.FileID,
+	)
+	if err != nil {
+		return fmt.Errorf("insert document: %w", err)
+	}
+	return nil
+}

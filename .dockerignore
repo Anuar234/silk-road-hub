@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.github
+backend/storage
+tests
+docs
+*.log
+.env
+.env.local
+tsconfig.tsbuildinfo
+ТЗ.docx
+ТЗ.pdf

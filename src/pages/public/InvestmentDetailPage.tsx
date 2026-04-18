@@ -1,12 +1,14 @@
-import { useMemo } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Building2, DollarSign, Mail, MapPin } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Building2, CheckCircle2, DollarSign, FileText, Mail, MapPin, Send } from 'lucide-react'
 import { Container } from '@widgets/layout/Container'
 import { Button } from '@shared/ui/Button'
 import { Card, CardContent, CardHeader } from '@shared/ui/Card'
 import { Badge } from '@shared/ui/Badge'
 import { getInvestmentById, INVESTMENT_STAGES, INVESTMENT_SOURCES } from '@features/investments/investmentData'
 import { CATALOG_SECTORS, getRegionByCode } from '@features/catalog/catalogStructure'
+import { useAuth } from '@features/auth/auth'
+import { InvestmentRequestDialog } from '@features/investments/InvestmentRequestDialog'
 
 function formatVolume(usd: number): string {
   if (usd >= 1_000_000_000) return `$${(usd / 1_000_000_000).toFixed(1)}B`
@@ -16,7 +18,15 @@ function formatVolume(usd: number): string {
 
 export function InvestmentDetailPage() {
   const { id } = useParams()
+  const auth = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [requestOpen, setRequestOpen] = useState(false)
+  const [requestSent, setRequestSent] = useState(false)
   const project = useMemo(() => getInvestmentById(id ?? ''), [id])
+
+  const canSendRequest = auth.isAuthenticated && (auth.role === 'investor' || auth.role === 'buyer' || auth.role === 'admin')
+  const projectDocuments = (project as unknown as { documentIds?: string[] })?.documentIds ?? []
 
   if (!project) {
     return (
@@ -109,26 +119,82 @@ export function InvestmentDetailPage() {
           <Card>
             <CardHeader title="Контакт" />
             <CardContent className="space-y-3">
-              <a
-                href={`mailto:${project.contactEmail}`}
-                className="flex items-center gap-2 text-sm font-medium text-brand-blue hover:underline"
-              >
-                <Mail className="size-4" />
-                {project.contactEmail}
-              </a>
-              <Button
-                variant="primary"
-                className="w-full gap-2"
-                as="a"
-                href={`mailto:${project.contactEmail}?subject=${encodeURIComponent(`Запрос по проекту: ${project.title}`)}`}
-              >
-                <Mail className="size-4" />
-                Направить запрос
-              </Button>
+              {project.contactEmail && (
+                <a
+                  href={`mailto:${project.contactEmail}`}
+                  className="flex items-center gap-2 text-sm font-medium text-brand-blue hover:underline"
+                >
+                  <Mail className="size-4" />
+                  {project.contactEmail}
+                </a>
+              )}
+              {requestSent ? (
+                <div className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+                  <CheckCircle2 className="size-4 shrink-0" />
+                  <div>
+                    Запрос отправлен.
+                    {auth.isAuthenticated && (
+                      <Link to="/app/investment-requests" className="ml-1 font-medium underline">
+                        Мои запросы
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ) : canSendRequest ? (
+                <Button variant="primary" className="w-full gap-2" onClick={() => setRequestOpen(true)}>
+                  <Send className="size-4" />
+                  Отправить инвест-запрос
+                </Button>
+              ) : auth.isAuthenticated ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                  Отправлять инвест-запросы могут пользователи с ролью «Инвестор» или «Покупатель». Смените роль
+                  через администратора или зарегистрируйте новый кабинет.
+                </div>
+              ) : (
+                <Button
+                  variant="primary"
+                  className="w-full gap-2"
+                  onClick={() => navigate('/login', { state: { from: `${location.pathname}${location.search}` } })}
+                >
+                  <Send className="size-4" />
+                  Войти и отправить запрос
+                </Button>
+              )}
             </CardContent>
           </Card>
+
+          {projectDocuments.length > 0 && (
+            <Card>
+              <CardHeader title="Документы проекта" />
+              <CardContent className="space-y-2">
+                {projectDocuments.map((fileId) => (
+                  <a
+                    key={fileId}
+                    href={`/api/files/${encodeURIComponent(fileId)}`}
+                    className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-sm text-slate-700 hover:border-brand-blue/40 hover:bg-slate-50"
+                  >
+                    <FileText className="size-4 text-slate-500" />
+                    <span className="truncate font-mono text-xs">{fileId.slice(0, 8)}…</span>
+                    <span className="ml-auto text-xs text-brand-blue">Скачать</span>
+                  </a>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
+
+      {requestOpen && (
+        <InvestmentRequestDialog
+          projectId={project.id}
+          projectTitle={project.title}
+          onClose={() => setRequestOpen(false)}
+          onSent={() => {
+            setRequestOpen(false)
+            setRequestSent(true)
+          }}
+        />
+      )}
     </Container>
   )
 }

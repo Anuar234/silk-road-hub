@@ -48,7 +48,7 @@ func (h *Handler) Register(c *gin.Context) {
 	}
 	h.setSessionCookie(c, sid)
 
-	c.JSON(http.StatusCreated, gin.H{"ok": true, "data": u.ToPayload()})
+	c.JSON(http.StatusCreated, gin.H{"ok": true, "data": u.ToPayload(nil)})
 }
 
 func (h *Handler) Login(c *gin.Context) {
@@ -71,7 +71,8 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 	h.setSessionCookie(c, sid)
 
-	c.JSON(http.StatusOK, gin.H{"user": u.ToPayload()})
+	docs, _ := h.svc.GetCompanyDocs(c.Request.Context(), u.ID)
+	c.JSON(http.StatusOK, gin.H{"user": u.ToPayload(docs)})
 }
 
 func (h *Handler) Logout(c *gin.Context) {
@@ -96,7 +97,31 @@ func (h *Handler) Me(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"user": u.ToPayload()})
+	docs, _ := h.svc.GetCompanyDocs(c.Request.Context(), u.ID)
+	c.JSON(http.StatusOK, gin.H{"user": u.ToPayload(docs)})
+}
+
+func (h *Handler) UpdateProfile(c *gin.Context) {
+	sess := middleware.GetSession(c)
+	if sess == nil {
+		apierror.Unauthorized(c, "")
+		return
+	}
+
+	var in ProfileUpdates
+	if err := c.ShouldBindJSON(&in); err != nil {
+		apierror.BadRequest(c, err.Error())
+		return
+	}
+
+	u, err := h.svc.UpdateProfile(c.Request.Context(), sess.UserID, &in)
+	if err != nil || u == nil {
+		apierror.BadRequest(c, "failed to update profile")
+		return
+	}
+
+	docs, _ := h.svc.GetCompanyDocs(c.Request.Context(), u.ID)
+	apierror.OK(c, http.StatusOK, u.ToPayload(docs))
 }
 
 func (h *Handler) createSession(c *gin.Context, u *User) (string, error) {

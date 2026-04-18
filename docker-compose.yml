@@ -6,11 +6,12 @@ services:
     environment:
       POSTGRES_DB: silkroadhub
       POSTGRES_USER: srh
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-srh_dev_pass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
       POSTGRES_HOST_AUTH_METHOD: md5
       POSTGRES_INITDB_ARGS: "--auth-host=md5"
+    # Bind DB only to loopback — never expose to the host network in prod.
     ports:
-      - "5435:5432"
+      - "127.0.0.1:5435:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,11 +19,15 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -30,6 +35,10 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
 
   backend:
     build:
@@ -38,11 +47,11 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SRH_DB_URL: postgres://srh:${POSTGRES_PASSWORD:-srh_dev_pass}@postgres:5432/silkroadhub?sslmode=disable
+      SRH_DB_URL: postgres://srh:${POSTGRES_PASSWORD}@postgres:5432/silkroadhub?sslmode=disable
       SRH_REDIS_URL: redis://redis:6379/0
-      SRH_SESSION_SECRET: ${SESSION_SECRET:-dev-session-secret-change-me}
-      SRH_CORS_ORIGIN: http://localhost:3000
-      SRH_SECURE_COOKIES: "false"
+      SRH_SESSION_SECRET: ${SRH_SESSION_SECRET:?SRH_SESSION_SECRET must be set in .env}
+      SRH_CORS_ORIGIN: ${SRH_CORS_ORIGIN:-http://localhost:3000}
+      SRH_SECURE_COOKIES: ${SRH_SECURE_COOKIES:-false}
       SRH_UPLOAD_DIR: /app/storage/uploads
       SRH_RUN_MIGRATIONS: "true"
     volumes:
@@ -53,6 +62,9 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
 
   frontend:
     build:
@@ -61,10 +73,15 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NODE_ENV: production
+      API_BACKEND_URL: http://backend:8080
+      CSP_STRICT_ENABLED: ${CSP_STRICT_ENABLED:-false}
     depends_on:
       - backend
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
 
 volumes:
   pg_data:

@@ -8,7 +8,7 @@ import { Input } from '@shared/ui/Input'
 import { Tabs } from '@shared/ui/Tabs'
 import { applyOfflineImageFallback } from '@shared/ui/imageFallback'
 import { cx } from '@shared/lib/cx'
-import { CATALOG_COUNTRIES, CATALOG_SECTORS, getSectorById, getSubcategoryById } from '@features/catalog/catalogStructure'
+import { CATALOG_COUNTRIES, CATALOG_SECTORS, KZ_REGIONS, getRegionByCode, getSectorById, getSubcategoryById } from '@features/catalog/catalogStructure'
 import { CatalogActiveFilters, CatalogEmptyState, CatalogFiltersPanel } from '@features/catalog/CatalogFiltersPanel'
 import { type CatalogTab } from '@features/catalog/catalogFilters'
 import { useCatalogController } from '@features/catalog/useCatalogController'
@@ -32,10 +32,21 @@ export function CatalogPage() {
 
   const sector = rawFilters.sectorId ? getSectorById(rawFilters.sectorId) : null
   const subcategory = sector && rawFilters.subcategoryId ? getSubcategoryById(rawFilters.sectorId, rawFilters.subcategoryId) : null
+  const region = rawFilters.regionCode ? getRegionByCode(rawFilters.regionCode) : null
   const showSectorGrid = !hasFilters && !rawFilters.sectorId
   const showSubcategoryLayer = Boolean(rawFilters.sectorId && sector && !rawFilters.subcategoryId)
   const showCountryLayer = Boolean(rawFilters.sectorId && rawFilters.subcategoryId && !rawFilters.countryCode)
+  const showRegionLayer = Boolean(rawFilters.countryCode === 'KZ' && rawFilters.sectorId && rawFilters.subcategoryId && !rawFilters.regionCode)
   const showResults = hasFilters
+
+  // ТЗ 5.10: товары Республики Казахстан отображаются первыми.
+  const sortedProducts = rawFilters.countryCode
+    ? filteredProducts
+    : [...filteredProducts].sort((a, b) => {
+        const aKZ = a.countryCode === 'KZ' ? 0 : 1
+        const bKZ = b.countryCode === 'KZ' ? 0 : 1
+        return aKZ - bKZ
+      })
 
   return (
     <Container className="py-8 sm:py-10">
@@ -115,9 +126,25 @@ export function CatalogPage() {
           {rawFilters.countryCode && (
             <>
               <ChevronRight className="size-4 shrink-0 text-slate-400" aria-hidden />
-              <span className="rounded-lg bg-slate-100 px-2 py-1 font-medium text-slate-900">
-                {CATALOG_COUNTRIES.find((item) => item.code === rawFilters.countryCode)?.name ?? rawFilters.countryCode}
-              </span>
+              {rawFilters.regionCode ? (
+                <button
+                  type="button"
+                  onClick={() => updateFilters({ regionCode: '' })}
+                  className="motion-tap rounded-lg px-2 py-1 font-medium text-brand-blue transition-colors duration-[var(--duration-medium)] hover:bg-brand-yellow-soft"
+                >
+                  {CATALOG_COUNTRIES.find((item) => item.code === rawFilters.countryCode)?.name ?? rawFilters.countryCode}
+                </button>
+              ) : (
+                <span className="rounded-lg bg-slate-100 px-2 py-1 font-medium text-slate-900">
+                  {CATALOG_COUNTRIES.find((item) => item.code === rawFilters.countryCode)?.name ?? rawFilters.countryCode}
+                </span>
+              )}
+            </>
+          )}
+          {region && (
+            <>
+              <ChevronRight className="size-4 shrink-0 text-slate-400" aria-hidden />
+              <span className="rounded-lg bg-slate-100 px-2 py-1 font-medium text-slate-900">{region.name}</span>
             </>
           )}
         </nav>
@@ -208,6 +235,43 @@ export function CatalogPage() {
             </section>
           )}
 
+          {showRegionLayer && (
+            <section className="mb-8">
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900">
+                <Globe className="size-5 text-brand-blue" />
+                Область Республики Казахстан
+              </h2>
+              <p className="mb-3 text-sm text-slate-500">
+                Уточните регион происхождения товара, чтобы увидеть предложения конкретной области РК.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {KZ_REGIONS.map((item) => (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => updateFilters({ regionCode: item.code })}
+                    className={cx(
+                      'motion-tap flex min-h-[48px] w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium transition-[border-color,background-color,color] duration-[var(--duration-medium)] ease-[var(--ease-primary)]',
+                      rawFilters.regionCode === item.code
+                        ? 'border-brand-blue bg-brand-yellow-soft text-slate-900'
+                        : 'border-border bg-white text-slate-700 hover:border-brand-blue/30 hover:bg-slate-50',
+                    )}
+                  >
+                    {item.name}
+                    <ChevronRight className="size-4 shrink-0 text-slate-400" />
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => updateFilters({ regionCode: '' })}
+                className="mt-4 text-sm font-medium text-brand-blue hover:underline"
+              >
+                Показать товары из всех регионов РК
+              </button>
+            </section>
+          )}
+
           {showResults && (
             <section>
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -286,7 +350,7 @@ export function CatalogPage() {
                 )
               ) : activeCount > 0 ? (
                 <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredProducts.map((product) => (
+                  {sortedProducts.map((product) => (
                     <Card key={product.id} className="overflow-hidden">
                       <div className="aspect-[16/10] overflow-hidden bg-slate-100 animate-pulse">
                         <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover animate-none" loading="lazy" onLoad={(e) => { e.currentTarget.parentElement?.classList.remove('animate-pulse') }} onError={(e) => { e.currentTarget.parentElement?.classList.remove('animate-pulse'); applyOfflineImageFallback(e) }} />

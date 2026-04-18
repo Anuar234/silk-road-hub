@@ -10,7 +10,7 @@ import { Button } from '@shared/ui/Button'
 import { Card, CardContent, CardHeader } from '@shared/ui/Card'
 import { Input } from '@shared/ui/Input'
 
-type SelectedRole = 'buyer' | 'seller'
+type SelectedRole = 'buyer' | 'seller' | 'investor'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -58,7 +58,7 @@ export function RegisterPage() {
       })
       // After registration the session cookie is set, reload auth
       await auth.login({ email, password })
-      if (role === 'seller') {
+      if (role === 'seller' || role === 'investor') {
         navigate('/app/verification', { replace: true })
       } else {
         navigate('/app/home', { replace: true })
@@ -79,7 +79,7 @@ export function RegisterPage() {
             <p className="mt-2 text-base text-slate-600">Выберите вашу роль на платформе</p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <RoleCard
               title="Покупатель / Импортёр"
               description="Ищу поставщиков и товары для импорта. Хочу отправлять запросы и заключать сделки."
@@ -92,7 +92,17 @@ export function RegisterPage() {
               selected={role === 'seller'}
               onClick={() => setRole('seller')}
             />
+            <RoleCard
+              title="Инвестор"
+              description="Просматриваю инвестиционные проекты, отправляю запросы, размещаю собственные инициативы."
+              selected={role === 'investor'}
+              onClick={() => setRole('investor')}
+            />
           </div>
+          <p className="text-xs text-slate-500">
+            Кабинет институционального пользователя (QazTrade, KazakhExport, Kazakh Invest и партнёры) предоставляется
+            администратором платформы по запросу и не доступен для открытой регистрации.
+          </p>
 
           <Button onClick={() => setStep('form')} className="gap-2">
             <UserPlus className="size-4" />
@@ -132,9 +142,9 @@ export function RegisterPage() {
               <Input id="reg-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+7 (7xx) xxx-xx-xx" />
             </Field>
 
-            {role === 'seller' ? (
+            {role === 'seller' || role === 'investor' ? (
               <>
-                <Field label="Название компании *" htmlFor="reg-company">
+                <Field label={role === 'investor' ? 'Название организации / фонда *' : 'Название компании *'} htmlFor="reg-company">
                   <Input id="reg-company" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="ТОО «Компания»" />
                 </Field>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -151,7 +161,7 @@ export function RegisterPage() {
             <div className="flex flex-wrap gap-2 pt-2">
               <Button variant="secondary" onClick={() => setStep('role')}>Назад</Button>
               <Button
-                disabled={loading || !email || !password || !displayName || (role === 'seller' && !companyName)}
+                disabled={loading || !email || !password || !displayName || ((role === 'seller' || role === 'investor') && !companyName)}
                 onClick={() => void handleSubmit()}
                 className="gap-2"
               >

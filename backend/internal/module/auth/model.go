@@ -20,28 +20,37 @@ type User struct {
 }
 
 type UserPayload struct {
-	ID                 string `json:"id"`
-	Email              string `json:"email"`
-	DisplayName        string `json:"displayName"`
-	Role               string `json:"role"`
-	Verified           bool   `json:"verified"`
-	CompanyName        string `json:"companyName,omitempty"`
-	BIN                string `json:"bin,omitempty"`
-	Phone              string `json:"phone,omitempty"`
-	VerificationStatus string `json:"verificationStatus"`
+	ID                 string   `json:"id"`
+	Email              string   `json:"email"`
+	DisplayName        string   `json:"displayName"`
+	Role               string   `json:"role"`
+	Verified           bool     `json:"verified"`
+	EmailVerified      bool     `json:"emailVerified"`
+	CompanyName        string   `json:"companyName,omitempty"`
+	BIN                string   `json:"bin,omitempty"`
+	Position           string   `json:"position,omitempty"`
+	Phone              string   `json:"phone,omitempty"`
+	VerificationStatus string   `json:"verificationStatus"`
+	CompanyDocs        []string `json:"companyDocs"`
 }
 
-func (u *User) ToPayload() *UserPayload {
+func (u *User) ToPayload(companyDocs []string) *UserPayload {
+	if companyDocs == nil {
+		companyDocs = []string{}
+	}
 	return &UserPayload{
 		ID:                 u.ID,
 		Email:              u.Email,
 		DisplayName:        u.DisplayName,
 		Role:               u.Role,
 		Verified:           u.Verified,
+		EmailVerified:      u.EmailVerified,
 		CompanyName:        u.CompanyName,
 		BIN:                u.BIN,
+		Position:           u.Position,
 		Phone:              u.Phone,
 		VerificationStatus: u.VerificationStatus,
+		CompanyDocs:        companyDocs,
 	}
 }
 
@@ -49,7 +58,7 @@ type RegisterInput struct {
 	Email       string `json:"email" binding:"required,email"`
 	Password    string `json:"password" binding:"required,min=6"`
 	DisplayName string `json:"displayName" binding:"required"`
-	Role        string `json:"role" binding:"required,oneof=buyer seller"`
+	Role        string `json:"role" binding:"required,oneof=buyer seller investor"`
 	Phone       string `json:"phone"`
 	CompanyName string `json:"companyName"`
 	BIN         string `json:"bin"`
@@ -59,4 +68,12 @@ type RegisterInput struct {
 type LoginInput struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
+}
+
+type ProfileUpdates struct {
+	DisplayName *string `json:"displayName"`
+	Phone       *string `json:"phone"`
+	CompanyName *string `json:"companyName"`
+	BIN         *string `json:"bin"`
+	Position    *string `json:"position"`
 }

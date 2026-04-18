@@ -100,3 +100,52 @@ var guaranteeProviders = map[string]string{
 	"letter_of_credit": "Банк-партнёр",
 	"bank_guarantee":   "Банк-партнёр",
 }
+
+func (s *Service) ListComments(ctx context.Context, dealID string) ([]*Comment, error) {
+	return s.repo.ListComments(ctx, dealID)
+}
+
+func (s *Service) CreateComment(ctx context.Context, dealID, author, authorRole string, in *CreateCommentInput) (*Comment, error) {
+	commentType := in.Type
+	if commentType == "" {
+		commentType = "status_note"
+	}
+	visibility := in.Visibility
+	if visibility == "" {
+		visibility = "all"
+	}
+	c := &Comment{
+		ID:         uuid.NewString(),
+		DealID:     dealID,
+		Type:       commentType,
+		Visibility: visibility,
+		Author:     author,
+		AuthorRole: authorRole,
+		Body:       in.Body,
+	}
+	if err := s.repo.CreateComment(ctx, c); err != nil {
+		return nil, err
+	}
+	return s.repo.findCommentByID(ctx, c.ID)
+}
+
+func (s *Service) ListDocuments(ctx context.Context, dealID string) ([]*Document, error) {
+	return s.repo.ListDocuments(ctx, dealID)
+}
+
+func (s *Service) CreateDocument(ctx context.Context, dealID, authorRole string, in *CreateDocumentInput) (*Document, error) {
+	d := &Document{
+		ID:             uuid.NewString(),
+		DealID:         dealID,
+		Name:           in.Name,
+		Type:           in.Type,
+		Status:         "uploaded",
+		UploadedByRole: &authorRole,
+		FileID:         &in.FileID,
+		Note:           in.Note,
+	}
+	if err := s.repo.CreateDocument(ctx, d); err != nil {
+		return nil, err
+	}
+	return d, nil
+}

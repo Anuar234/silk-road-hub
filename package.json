@@ -9,14 +9,9 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "offline:serve": "next start --hostname 127.0.0.1 --port 4173",
-    "preview": "npm run build && npm run offline:serve",
-    "demo:launch": "node scripts/launch-demo.mjs",
-    "demo": "npm run demo:launch",
     "test": "npm run test:unit",
     "test:unit": "vitest run",
-    "test:e2e": "playwright test",
-    "offline": "npm run preview"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -56,6 +57,47 @@ func (r *Repository) List(ctx context.Context) ([]*User, error) {
 	return users, nil
 }
 
+func (r *Repository) UpdateProfile(ctx context.Context, id string, updates *ProfileUpdates) error {
+	sets := []string{}
+	args := []any{}
+	i := 1
+	if updates.DisplayName != nil {
+		sets = append(sets, fmt.Sprintf("display_name = $%d", i))
+		args = append(args, *updates.DisplayName)
+		i++
+	}
+	if updates.Phone != nil {
+		sets = append(sets, fmt.Sprintf("phone = $%d", i))
+		args = append(args, *updates.Phone)
+		i++
+	}
+	if updates.CompanyName != nil {
+		sets = append(sets, fmt.Sprintf("company_name = $%d", i))
+		args = append(args, *updates.CompanyName)
+		i++
+	}
+	if updates.BIN != nil {
+		sets = append(sets, fmt.Sprintf("bin = $%d", i))
+		args = append(args, *updates.BIN)
+		i++
+	}
+	if updates.Position != nil {
+		sets = append(sets, fmt.Sprintf("position = $%d", i))
+		args = append(args, *updates.Position)
+		i++
+	}
+	if len(sets) == 0 {
+		return nil
+	}
+	sets = append(sets, "updated_at = NOW()")
+	query := fmt.Sprintf("UPDATE users SET %s WHERE id = $%d", strings.Join(sets, ", "), i)
+	args = append(args, id)
+	if _, err := r.pool.Exec(ctx, query, args...); err != nil {
+		return fmt.Errorf("update profile: %w", err)
+	}
+	return nil
+}
+
 func (r *Repository) UpdateVerification(ctx context.Context, id string, status string) error {
 	verified := status == "verified"
 	_, err := r.pool.Exec(ctx, `
@@ -71,6 +113,26 @@ func (r *Repository) EmailExists(ctx context.Context, email string) (bool, error
 	var exists bool
 	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`, email).Scan(&exists)
 	return exists, err
+}
+
+func (r *Repository) GetCompanyDocs(ctx context.Context, userID string) ([]string, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT file_id::text FROM user_company_docs
+		WHERE user_id = $1 ORDER BY attached_at`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("query company docs: %w", err)
+	}
+	defer rows.Close()
+
+	docs := []string{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scan company doc: %w", err)
+		}
+		docs = append(docs, id)
+	}
+	return docs, nil
 }
 
 func (r *Repository) scanOne(ctx context.Context, sql string, args ...any) (*User, error) {

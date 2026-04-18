@@ -13,6 +13,7 @@ func RegisterRoutes(api *gin.RouterGroup, svc *Service, store *session.Store) {
 	{
 		users.GET("", middleware.RequireRole("admin"), h.List)
 		users.PUT("/:id/verify", middleware.RequireRole("admin"), h.Verify)
+		users.PUT("/:id/role", middleware.RequireRole("admin"), h.UpdateRole)
 		users.POST("/:id/docs", h.AttachDoc)
 	}
 }

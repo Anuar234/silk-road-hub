@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { apiLogin, apiLogout, apiMe, type ApiUser } from '@shared/api/authApi'
 import { clearAuthStorage, readAuthStorage } from '@shared/api/authStorage'
 
-export type Role = 'buyer' | 'seller' | 'admin'
+export type Role = 'buyer' | 'seller' | 'investor' | 'institutional' | 'admin'
 
 export type AuthState = {
   isAuthLoading: boolean
