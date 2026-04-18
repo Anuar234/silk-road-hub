@@ -16,4 +16,8 @@ func RegisterRoutes(api *gin.RouterGroup, svc *Service, store *session.Store) {
 		shipments.POST("", h.Create)
 		shipments.PUT("/:id", h.Update)
 	}
+
+	// Route templates are public — used by the logistics form even before
+	// selecting a deal. Auth not required.
+	api.GET("/route-templates", h.ListRouteTemplates)
 }

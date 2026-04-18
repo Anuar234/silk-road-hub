@@ -27,6 +27,7 @@ import (
 	"github.com/silkroadhub/backend/internal/module/file"
 	"github.com/silkroadhub/backend/internal/module/investment"
 	"github.com/silkroadhub/backend/internal/module/investmentrequest"
+	"github.com/silkroadhub/backend/internal/module/news"
 	"github.com/silkroadhub/backend/internal/module/product"
 	"github.com/silkroadhub/backend/internal/module/reference"
 	"github.com/silkroadhub/backend/internal/module/shipment"
@@ -140,6 +141,10 @@ func main() {
 	refRepo := reference.NewRepository(pool)
 	refSvc := reference.NewService(refRepo)
 	reference.RegisterRoutes(api, refSvc)
+
+	newsRepo := news.NewRepository(pool)
+	newsSvc := news.NewService(newsRepo)
+	news.RegisterRoutes(api, newsSvc, sessStore)
 
 	// --- Server ---
 	addr := fmt.Sprintf(":%d", cfg.Port)

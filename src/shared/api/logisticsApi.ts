@@ -1,5 +1,12 @@
 import { apiGetCsrfToken } from '@shared/api/authApi'
-import type { Shipment } from '@features/logistics/logisticsData'
+import type { Shipment, RouteTemplate } from '@features/logistics/logisticsData'
+
+export async function apiGetRouteTemplates(): Promise<RouteTemplate[]> {
+  const res = await fetch('/api/route-templates', { credentials: 'include' })
+  if (!res.ok) throw new Error('Не удалось загрузить шаблоны маршрутов.')
+  const data = (await res.json()) as { ok: true; data: RouteTemplate[] }
+  return data.data
+}
 
 export async function apiGetShipments(dealId?: string): Promise<Shipment[]> {
   const url = dealId ? `/api/shipments?dealId=${dealId}` : '/api/shipments'

@@ -1,5 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@features/auth/auth'
+import { useT } from '@features/i18n/i18n'
+import { LocaleSwitcher } from '@features/i18n/LocaleSwitcher'
 import { Container } from '@widgets/layout/Container'
 import { Button } from '@shared/ui/Button'
 import { ButtonLink } from '@shared/ui/ButtonLink'
@@ -7,19 +9,20 @@ import { Logo } from '@shared/ui/Logo'
 import { cx } from '@shared/lib/cx'
 import { MobileNavDrawer } from '@widgets/layout/MobileNavDrawer'
 
-const navItems = [
-  { to: '/', label: 'Главная' },
-  { to: '/catalog', label: 'Каталог' },
-  { to: '/analytics', label: 'Аналитика' },
-  { to: '/about', label: 'О нас' },
-  { to: '/investments', label: 'Инвестпроекты' },
-  { to: '/contacts', label: 'Контакты' },
-] as const
-
 export function PublicLayout() {
   const auth = useAuth()
   const location = useLocation()
+  const t = useT()
   const cabinetTarget = auth.role === 'admin' ? '/admin/dashboard' : '/app/home'
+
+  const navItems = [
+    { to: '/', label: t('app.home', 'Главная') },
+    { to: '/catalog', label: t('nav.catalog', 'Каталог') },
+    { to: '/analytics', label: t('nav.analytics', 'Аналитика') },
+    { to: '/about', label: t('nav.about', 'О платформе') },
+    { to: '/investments', label: t('nav.investments', 'Инвестпроекты') },
+    { to: '/contacts', label: t('nav.contacts', 'Контакты') },
+  ] as const
 
   return (
     <div className="min-h-full bg-white">
@@ -74,22 +77,25 @@ export function PublicLayout() {
             {auth.isAuthenticated ? (
               <>
                 <ButtonLink to={cabinetTarget} variant="secondary" size="sm" className="hidden sm:inline-flex">
-                  Кабинет
+                  {t('nav.cabinet', 'Кабинет')}
                 </ButtonLink>
                 <Button variant="ghost" size="sm" onClick={() => void auth.logout()} className="hidden sm:inline-flex">
-                  Выйти
+                  {t('nav.logout', 'Выйти')}
                 </Button>
               </>
             ) : (
               <>
                 <ButtonLink to="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">
-                  Войти
+                  {t('nav.login', 'Войти')}
                 </ButtonLink>
                 <ButtonLink to="/request-access" variant="primary" size="sm">
                   Запросить доступ
                 </ButtonLink>
               </>
             )}
+            <div className="hidden sm:block">
+              <LocaleSwitcher variant="compact" />
+            </div>
           </div>
         </Container>
       </header>

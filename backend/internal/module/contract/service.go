@@ -16,7 +16,7 @@ func NewService(repo *Repository) *Service {
 
 func (s *Service) Create(ctx context.Context, in *CreateInput) (*Contract, error) {
 	deadlines := in.Deadlines
-	if deadlines == nil {
+	if len(deadlines) == 0 {
 		deadlines = []byte("[]")
 	}
 
@@ -54,8 +54,8 @@ func (s *Service) Update(ctx context.Context, id string, in *UpdateInput) (*Cont
 	if in.SignedDocFileID != nil {
 		sets["signed_doc_file_id"] = *in.SignedDocFileID
 	}
-	if in.Deadlines != nil {
-		sets["deadlines"] = in.Deadlines
+	if len(in.Deadlines) > 0 {
+		sets["deadlines"] = []byte(in.Deadlines)
 	}
 	if in.Notes != nil {
 		sets["notes"] = *in.Notes

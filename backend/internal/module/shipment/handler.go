@@ -48,6 +48,15 @@ func (h *Handler) Create(c *gin.Context) {
 	apierror.OK(c, http.StatusCreated, sh)
 }
 
+func (h *Handler) ListRouteTemplates(c *gin.Context) {
+	items, err := h.svc.ListRouteTemplates(c.Request.Context())
+	if err != nil {
+		apierror.Internal(c, err.Error())
+		return
+	}
+	apierror.OK(c, http.StatusOK, items)
+}
+
 func (h *Handler) Update(c *gin.Context) {
 	var in UpdateInput
 	if err := c.ShouldBindJSON(&in); err != nil {

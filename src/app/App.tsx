@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from '@shared/ui/ErrorBoundary'
 import { AuthProvider } from '@features/auth/auth'
+import { LocaleProvider } from '@features/i18n/i18n'
 import { RequireAuth } from '@features/auth/requireAuth'
 import { RequireAppUser } from '@features/auth/requireAppUser'
 import { RequireSeller } from '@features/auth/requireSeller'
@@ -56,6 +57,8 @@ const AdminSettingsPage = lazy(async () => ({ default: (await import('@pages/adm
 const AdminVerificationPage = lazy(async () => ({ default: (await import('@pages/admin/AdminVerificationPage')).AdminVerificationPage }))
 const AdminInvestmentsPage = lazy(async () => ({ default: (await import('@pages/admin/AdminInvestmentsPage')).AdminInvestmentsPage }))
 const AdminAuditLogPage = lazy(async () => ({ default: (await import('@pages/admin/AdminAuditLogPage')).AdminAuditLogPage }))
+const AdminNewsPage = lazy(async () => ({ default: (await import('@pages/admin/AdminNewsPage')).AdminNewsPage }))
+const AdminNewsEditorPage = lazy(async () => ({ default: (await import('@pages/admin/AdminNewsEditorPage')).AdminNewsEditorPage }))
 
 /**
  * Canonical route tree for the product.
@@ -66,6 +69,7 @@ const AdminAuditLogPage = lazy(async () => ({ default: (await import('@pages/adm
 export default function App() {
   return (
     <ErrorBoundary>
+    <LocaleProvider>
     <AuthProvider>
       <Suspense fallback={<div className="p-6 text-sm text-slate-500">Загрузка интерфейса...</div>}>
         <Routes>
@@ -129,6 +133,9 @@ export default function App() {
                 <Route path="verification" element={<AdminVerificationPage />} />
                 <Route path="investments" element={<AdminInvestmentsPage />} />
                 <Route path="audit-log" element={<AdminAuditLogPage />} />
+                <Route path="news" element={<AdminNewsPage />} />
+                <Route path="news/new" element={<AdminNewsEditorPage mode="create" />} />
+                <Route path="news/:id/edit" element={<AdminNewsEditorPage mode="edit" />} />
                 {/* Legacy redirect */}
                 <Route path="purchase-intents" element={<Navigate to="/admin/deals" replace />} />
                 <Route path="purchase-intents/:id" element={<Navigate to="/admin/deals" replace />} />
@@ -140,6 +147,7 @@ export default function App() {
         </Routes>
       </Suspense>
     </AuthProvider>
+    </LocaleProvider>
     </ErrorBoundary>
   )
 }

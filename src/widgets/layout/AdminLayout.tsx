@@ -1,28 +1,32 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BarChart3, Building2, FileText, FolderOpen, History, LayoutDashboard, LogOut, MessagesSquare, PieChart, Settings, Shield, Users, Package } from 'lucide-react'
+import { BarChart3, Building2, FileText, FolderOpen, History, LayoutDashboard, LogOut, MessagesSquare, Newspaper, PieChart, Settings, Shield, Users, Package } from 'lucide-react'
 import { Logo } from '@shared/ui/Logo'
 import { useAuth } from '@features/auth/auth'
+import { useT } from '@features/i18n/i18n'
+import { LocaleSwitcher } from '@features/i18n/LocaleSwitcher'
 import { Button } from '@shared/ui/Button'
 import { cx } from '@shared/lib/cx'
-
-const sideItems = [
-  { to: '/admin/dashboard', label: 'Дашборд', icon: LayoutDashboard },
-  { to: '/admin/deals', label: 'Сделки', icon: FolderOpen },
-  { to: '/admin/documents', label: 'Документы', icon: FileText },
-  { to: '/admin/messages', label: 'Сообщения', icon: MessagesSquare },
-  { to: '/admin/users', label: 'Пользователи', icon: Users },
-  { to: '/admin/catalog', label: 'Каталог', icon: Package },
-  { to: '/admin/investments', label: 'Инвестпроекты', icon: Building2 },
-  { to: '/admin/statistics', label: 'Статистика', icon: BarChart3 },
-  { to: '/admin/analytics', label: 'Аналитика', icon: PieChart },
-  { to: '/admin/reports', label: 'Отчёты', icon: FileText },
-  { to: '/admin/audit-log', label: 'Журнал действий', icon: History },
-  { to: '/admin/settings', label: 'Настройки', icon: Settings },
-] as const
 
 export function AdminLayout() {
   const auth = useAuth()
   const location = useLocation()
+  const t = useT()
+
+  const sideItems = [
+    { to: '/admin/dashboard', label: t('admin.dashboard', 'Дашборд'), icon: LayoutDashboard },
+    { to: '/admin/deals', label: t('admin.deals', 'Сделки'), icon: FolderOpen },
+    { to: '/admin/documents', label: t('admin.documents', 'Документы'), icon: FileText },
+    { to: '/admin/messages', label: t('admin.messages', 'Сообщения'), icon: MessagesSquare },
+    { to: '/admin/users', label: t('admin.users', 'Пользователи'), icon: Users },
+    { to: '/admin/catalog', label: t('admin.catalog', 'Каталог'), icon: Package },
+    { to: '/admin/investments', label: t('admin.investments', 'Инвестпроекты'), icon: Building2 },
+    { to: '/admin/statistics', label: t('admin.statistics', 'Статистика'), icon: BarChart3 },
+    { to: '/admin/analytics', label: t('admin.analytics', 'Аналитика'), icon: PieChart },
+    { to: '/admin/reports', label: t('admin.reports', 'Отчёты'), icon: FileText },
+    { to: '/admin/news', label: t('admin.news', 'Новости'), icon: Newspaper },
+    { to: '/admin/audit-log', label: t('admin.auditLog', 'Журнал действий'), icon: History },
+    { to: '/admin/settings', label: t('admin.settings', 'Настройки'), icon: Settings },
+  ] as const
 
   return (
     <div className="min-h-full bg-slate-50">
@@ -38,9 +42,10 @@ export function AdminLayout() {
               <div className="text-sm font-semibold text-slate-900">Администратор · {auth.displayName ?? auth.email ?? '—'}</div>
               <div className="text-xs text-slate-500">Изолированная операционная панель</div>
             </div>
+            <LocaleSwitcher variant="compact" />
             <Button variant="ghost" size="sm" onClick={() => auth.logout()} className="gap-2">
               <LogOut className="size-4" />
-              Выйти
+              {t('nav.logout', 'Выйти')}
             </Button>
           </div>
         </div>

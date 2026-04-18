@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS news;
+DROP TYPE IF EXISTS news_status;

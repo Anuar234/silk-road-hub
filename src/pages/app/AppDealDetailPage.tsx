@@ -8,6 +8,10 @@ import { Button } from '@shared/ui/Button'
 import { ContractSection, LogisticsSection, PaymentSection, GuaranteesSection } from '@widgets/deal/DealSubSections'
 import { DealChat } from '@features/deals/DealChat'
 import { DealDocumentsRemote } from '@features/deals/DealDocumentsRemote'
+import { DealContractsRemote } from '@features/contracts/DealContractsRemote'
+import { DealLogisticsRemote } from '@features/logistics/DealLogisticsRemote'
+import { DealPaymentsRemote } from '@features/deals/DealPaymentsRemote'
+import { DealGuaranteesRemote } from '@features/deals/DealGuaranteesRemote'
 import { useAuth } from '@features/auth/auth'
 import { getDealById, getDealProduct, getDealSeller, updateDealStatus, DEAL_STATUS_LABELS, DEAL_STATUS_TONE, DOC_STATUS_LABELS } from '@features/deals/dealData'
 import { addMessage, addSystemMessage } from '@features/messaging/messagingData'
@@ -167,6 +171,16 @@ export function AppDealDetailPage() {
       {/* LOI/MOU documents and chat backed by Go API (ТЗ 5.3) */}
       <DealDocumentsRemote dealId={deal.id} />
       <DealChat dealId={deal.id} />
+
+      {/* Contracts: templates, applicable law, signed docs, status workflow (ТЗ 5.4) */}
+      <DealContractsRemote dealId={deal.id} />
+
+      {/* Logistics: route templates, stages, documents (ТЗ 5.5) */}
+      <DealLogisticsRemote dealId={deal.id} />
+
+      {/* Finance: payment stages 30/40/30 + guarantees with KazakhExport (ТЗ 5.6) */}
+      <DealPaymentsRemote dealId={deal.id} />
+      <DealGuaranteesRemote dealId={deal.id} />
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3">

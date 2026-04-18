@@ -77,6 +77,10 @@ func (s *Service) List(ctx context.Context, dealID string) ([]*Shipment, error) 
 	return s.repo.ListAll(ctx)
 }
 
+func (s *Service) ListRouteTemplates(ctx context.Context) ([]*RouteTemplate, error) {
+	return s.repo.ListRouteTemplates(ctx)
+}
+
 func (s *Service) Update(ctx context.Context, id string, in *UpdateInput) (*Shipment, error) {
 	sh, err := s.repo.GetByID(ctx, id)
 	if err != nil || sh == nil {

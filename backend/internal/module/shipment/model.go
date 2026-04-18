@@ -1,17 +1,20 @@
 package shipment
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Shipment struct {
-	ID          string    `json:"id" db:"id"`
-	DealID      string    `json:"dealId" db:"deal_id"`
-	Origin      string    `json:"origin" db:"origin"`
-	Destination string    `json:"destination" db:"destination"`
-	RouteName   string    `json:"routeName" db:"route_name"`
-	Stages      []byte    `json:"stages" db:"stages"`
-	DocumentIDs []string  `json:"documentIds" db:"document_ids"`
-	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
-	UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
+	ID          string          `json:"id" db:"id"`
+	DealID      string          `json:"dealId" db:"deal_id"`
+	Origin      string          `json:"origin" db:"origin"`
+	Destination string          `json:"destination" db:"destination"`
+	RouteName   string          `json:"routeName" db:"route_name"`
+	Stages      json.RawMessage `json:"stages" db:"stages"`
+	DocumentIDs []string        `json:"documentIds" db:"document_ids"`
+	CreatedAt   time.Time       `json:"createdAt" db:"created_at"`
+	UpdatedAt   time.Time       `json:"updatedAt" db:"updated_at"`
 }
 
 type CreateInput struct {

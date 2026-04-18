@@ -73,6 +73,25 @@ func (r *Repository) GetRouteTemplate(ctx context.Context, id string) (*RouteTem
 	return &rt, nil
 }
 
+func (r *Repository) ListRouteTemplates(ctx context.Context) ([]*RouteTemplate, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT id, name, origin, destination, stages FROM route_templates ORDER BY name`)
+	if err != nil {
+		return nil, fmt.Errorf("list route templates: %w", err)
+	}
+	defer rows.Close()
+
+	out := []*RouteTemplate{}
+	for rows.Next() {
+		var rt RouteTemplate
+		if err := rows.Scan(&rt.ID, &rt.Name, &rt.Origin, &rt.Destination, &rt.Stages); err != nil {
+			return nil, fmt.Errorf("scan route template: %w", err)
+		}
+		out = append(out, &rt)
+	}
+	return out, nil
+}
+
 func (r *Repository) list(ctx context.Context, where sq.Eq) ([]*Shipment, error) {
 	q := psql.Select("*").From("shipments").OrderBy("created_at DESC")
 	if where != nil {
