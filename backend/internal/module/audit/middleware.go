@@ -45,6 +45,12 @@ func Middleware(svc *Service) gin.HandlerFunc {
 		}
 
 		go func(e *Entry) {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("audit log panic recovered", "panic", r, "path", e.Path)
+				}
+			}()
+
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			if err := svc.Record(ctx, e); err != nil {
