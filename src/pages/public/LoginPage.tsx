@@ -1,4 +1,4 @@
-import { Lock, LogIn } from 'lucide-react'
+﻿import { Lock, LogIn } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -22,18 +22,24 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const demoEnabled = process.env.NEXT_PUBLIC_ENABLE_DEMO_LOGIN !== 'false'
+
+  // Demo quick-login is disabled in production by default.
+  const demoEnabled =
+    process.env.NODE_ENV !== 'production' &&
+    process.env.NEXT_PUBLIC_ENABLE_DEMO_LOGIN !== 'false'
+
   const demoAccounts = [
-    { label: 'Покупатель', login: 'Test', password: 'Test123' },
-    { label: 'Продавец', login: 'Test123', password: 'Test123' },
-    { label: 'Админ', login: 'Admin', password: 'Admin' },
+    { label: 'Админ', email: 'admin@silkroadhub.kz', password: 'Admin123!SRH' },
   ] as const
 
   const handleLogin = async () => {
+    const normalizedEmail = email.trim()
+    if (!normalizedEmail || !password) return
+
     setLoading(true)
     setError(null)
     try {
-      const result = await auth.login({ email, password })
+      const result = await auth.login({ email: normalizedEmail, password })
       const target = result.role === 'admin' ? '/admin/dashboard' : from
       navigate(target, { replace: true })
     } catch (e) {
@@ -48,14 +54,14 @@ export function LoginPage() {
       <div className="mx-auto grid max-w-xl gap-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Вход</h1>
-          <p className="mt-2 text-base text-slate-600">Логин + пароль</p>
+          <p className="mt-2 text-base text-slate-600">Введите email и пароль</p>
         </div>
 
         <Card>
-          <CardHeader title="Введите данные" />
+          <CardHeader title="Данные для входа" />
           <CardContent className="grid gap-3">
             <div aria-live="polite">
-              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Быстрый вход для демо</div>
+              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Быстрый вход для demo</div>
               <div className="flex flex-wrap gap-2">
                 {demoEnabled ? (
                   demoAccounts.map((account) => (
@@ -65,7 +71,7 @@ export function LoginPage() {
                       variant="secondary"
                       size="sm"
                       onClick={() => {
-                        setEmail(account.login)
+                        setEmail(account.email)
                         setPassword(account.password)
                       }}
                     >
@@ -73,13 +79,23 @@ export function LoginPage() {
                     </Button>
                   ))
                 ) : (
-                  <span className="text-xs text-slate-500">Демо-аккаунты отключены в production.</span>
+                  <span className="text-xs text-slate-500">Demo-аккаунты отключены в production.</span>
                 )}
               </div>
             </div>
-            <Field label="Логин" htmlFor="login-email">
-              <Input id="login-email" value={email} onChange={(e) => setEmail(e.target.value)} type="text" placeholder="name@company.com" aria-describedby={error ? 'login-error' : undefined} />
+
+            <Field label="Email" htmlFor="login-email">
+              <Input
+                id="login-email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                autoComplete="email"
+                placeholder="name@company.com"
+                aria-describedby={error ? 'login-error' : undefined}
+              />
             </Field>
+
             <Field label="Пароль" htmlFor="login-password">
               <Input
                 id="login-password"
@@ -92,6 +108,7 @@ export function LoginPage() {
                   }
                 }}
                 type="password"
+                autoComplete="current-password"
                 placeholder="••••••••"
                 aria-describedby={error ? 'login-error' : undefined}
               />
@@ -99,7 +116,7 @@ export function LoginPage() {
 
             <Button
               className="gap-2"
-              disabled={loading || !email || !password}
+              disabled={loading || !email.trim() || !password}
               onClick={() => void handleLogin()}
             >
               <LogIn className="size-4" />
@@ -113,7 +130,7 @@ export function LoginPage() {
                 Запросить доступ
               </ButtonLink>
               <div className="rounded-xl border border-border bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                {demoEnabled ? 'Для локального демо используйте быстрый вход.' : 'В production вход доступен только через серверные учетные записи.'}
+                В production используйте только реальные серверные учетные записи.
               </div>
             </div>
           </CardContent>
@@ -127,15 +144,7 @@ export function LoginPage() {
             <div>
               <div className="text-sm font-semibold text-slate-900">Закрытый доступ</div>
               <div className="mt-1 text-sm text-slate-600">
-                Silk Road Hub — закрытая B2B‑платформа. Если у вас нет доступа, отправьте заявку на подтверждение компании.
-              </div>
-              {demoEnabled ? (
-                <div className="mt-2 text-xs text-slate-500">
-                  Покупатель: <span className="font-semibold">Test / Test123</span>. Продавец: <span className="font-semibold">Test123 / Test123</span>. Админ: <span className="font-semibold">Admin / Admin</span>.
-                </div>
-              ) : null}
-              <div className="mt-2 text-xs text-slate-500">
-                После входа покупатель попадает в рабочий кабинет и каталог, продавец в управление товарами и сделками, администратор в операционную панель.
+                Silk Road Hub — закрытая B2B-платформа. Если у вас нет доступа, отправьте заявку на подтверждение компании.
               </div>
             </div>
           </div>
@@ -153,4 +162,3 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor: string; c
     </div>
   )
 }
-

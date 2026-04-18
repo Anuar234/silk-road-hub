@@ -1,4 +1,4 @@
-import type { Role } from '@features/auth/auth'
+﻿import type { Role } from '@features/auth/auth'
 
 export type VerificationStatus = 'pending' | 'verified' | 'rejected'
 
@@ -17,11 +17,21 @@ export type ApiUser = {
   companyDocs: string[]
 }
 
+type ApiErrorPayload = {
+  error?: string
+  message?: string
+}
+
 function readCookie(name: string): string | null {
   if (typeof document === 'undefined') return null
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`))
   return match ? decodeURIComponent(match[1]) : null
+}
+
+async function readApiError(res: Response): Promise<string | null> {
+  const payload = (await res.json().catch(() => ({}))) as ApiErrorPayload
+  return payload.error ?? payload.message ?? null
 }
 
 export async function apiGetCsrfToken(): Promise<string> {
@@ -36,7 +46,7 @@ export async function apiGetCsrfToken(): Promise<string> {
 export async function apiMe(): Promise<ApiUser | null> {
   const res = await fetch('/api/auth/me', { credentials: 'include' })
   if (res.status === 401) return null
-  if (!res.ok) throw new Error('Failed to fetch auth profile.')
+  if (!res.ok) throw new Error((await readApiError(res)) ?? 'Failed to fetch auth profile.')
   const data = (await res.json()) as { user: ApiUser }
   return data.user
 }
@@ -53,8 +63,7 @@ export async function apiLogin(args: { email: string; password: string }): Promi
     body: JSON.stringify(args),
   })
   if (!res.ok) {
-    const payload = (await res.json().catch(() => ({}))) as { message?: string }
-    throw new Error(payload.message ?? 'Неверный логин или пароль')
+    throw new Error((await readApiError(res)) ?? 'Invalid email or password')
   }
   const data = (await res.json()) as { user: ApiUser }
   return data.user
@@ -83,8 +92,7 @@ export async function apiRegister(args: RegisterArgs): Promise<ApiUser> {
     body: JSON.stringify(args),
   })
   if (!res.ok) {
-    const payload = (await res.json().catch(() => ({}))) as { message?: string }
-    throw new Error(payload.message ?? 'Ошибка регистрации')
+    throw new Error((await readApiError(res)) ?? 'Registration error')
   }
   const data = (await res.json()) as { ok: true; data: ApiUser }
   return data.data
@@ -108,8 +116,7 @@ export async function apiUpdateProfile(updates: {
     body: JSON.stringify(updates),
   })
   if (!res.ok) {
-    const payload = (await res.json().catch(() => ({}))) as { message?: string }
-    throw new Error(payload.message ?? 'Ошибка обновления профиля')
+    throw new Error((await readApiError(res)) ?? 'Profile update error')
   }
   const data = (await res.json()) as { ok: true; data: ApiUser }
   return data.data
