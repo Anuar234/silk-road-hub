@@ -4,11 +4,12 @@
 
 export type LocaleCode = 'ru' | 'en' | 'kz' | 'cn'
 
+// Display order (top to bottom): English, Chinese, Kazakh, Russian.
 export const SUPPORTED_LOCALES: { code: LocaleCode; name: string; nativeName: string }[] = [
-  { code: 'ru', name: 'Russian', nativeName: 'Русский' },
   { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'kz', name: 'Kazakh', nativeName: 'Қазақша' },
   { code: 'cn', name: 'Chinese', nativeName: '中文' },
+  { code: 'kz', name: 'Kazakh', nativeName: 'Қазақша' },
+  { code: 'ru', name: 'Russian', nativeName: 'Русский' },
 ]
 
 export const DEFAULT_LOCALE: LocaleCode = 'ru'
