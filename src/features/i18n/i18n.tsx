@@ -39,17 +39,16 @@ function writeStoredLocale(code: LocaleCode): void {
 }
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<LocaleCode>(DEFAULT_LOCALE)
-
-  useEffect(() => {
+  // Lazy initializer: read stored locale / detect browser locale once during
+  // mount instead of via useEffect + setState (blocked by react-hooks/set-state-in-effect
+  // in React 19 / Next 15 strict mode). LocaleProvider is mounted inside
+  // ClientAppShell with ssr:false, so `window` is safe here.
+  const [locale, setLocaleState] = useState<LocaleCode>(() => {
+    if (typeof window === 'undefined') return DEFAULT_LOCALE
     const stored = readStoredLocale()
-    if (stored) {
-      setLocaleState(stored)
-      return
-    }
-    const detected = detectBrowserLocale()
-    setLocaleState(detected)
-  }, [])
+    if (stored) return stored
+    return detectBrowserLocale()
+  })
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
