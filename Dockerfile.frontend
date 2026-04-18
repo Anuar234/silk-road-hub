@@ -2,6 +2,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 ENV NODE_ENV=production
+ARG API_BACKEND_URL
+ARG CSP_STRICT_ENABLED
+ENV API_BACKEND_URL=${API_BACKEND_URL}
+ENV CSP_STRICT_ENABLED=${CSP_STRICT_ENABLED}
 COPY package*.json ./
 RUN npm ci --include=dev
 
@@ -21,6 +25,10 @@ RUN apk add --no-cache dumb-init && \
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
+ARG API_BACKEND_URL
+ARG CSP_STRICT_ENABLED
+ENV API_BACKEND_URL=${API_BACKEND_URL}
+ENV CSP_STRICT_ENABLED=${CSP_STRICT_ENABLED}
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
