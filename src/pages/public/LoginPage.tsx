@@ -23,23 +23,21 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Demo quick-login is disabled in production by default.
-  const demoEnabled =
-    process.env.NODE_ENV !== 'production' &&
-    process.env.NEXT_PUBLIC_ENABLE_DEMO_LOGIN !== 'false'
+  const demoEnabled = process.env.NEXT_PUBLIC_ENABLE_DEMO_LOGIN !== 'false'
 
   const demoAccounts = [
+    { label: 'Покупатель', email: 'buyer.demo@silkroadhub.kz', password: 'BuyerDemo123!' },
+    { label: 'Продавец', email: 'seller.demo@silkroadhub.kz', password: 'SellerDemo123!' },
     { label: 'Админ', email: 'admin@silkroadhub.kz', password: 'Admin123!SRH' },
   ] as const
 
-  const handleLogin = async () => {
-    const normalizedEmail = email.trim()
-    if (!normalizedEmail || !password) return
-
+  const performLogin = async (loginEmail: string, loginPassword: string) => {
+    const normalizedEmail = loginEmail.trim()
+    if (!normalizedEmail || !loginPassword) return
     setLoading(true)
     setError(null)
     try {
-      const result = await auth.login({ email: normalizedEmail, password })
+      const result = await auth.login({ email: normalizedEmail, password: loginPassword })
       const target = result.role === 'admin' ? '/admin/dashboard' : from
       navigate(target, { replace: true })
     } catch (e) {
@@ -47,6 +45,16 @@ export function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleLogin = async () => {
+    await performLogin(email, password)
+  }
+
+  const handleDemoLogin = async (account: (typeof demoAccounts)[number]) => {
+    setEmail(account.email)
+    setPassword(account.password)
+    await performLogin(account.email, account.password)
   }
 
   return (
@@ -70,16 +78,14 @@ export function LoginPage() {
                       type="button"
                       variant="secondary"
                       size="sm"
-                      onClick={() => {
-                        setEmail(account.email)
-                        setPassword(account.password)
-                      }}
+                      disabled={loading}
+                      onClick={() => void handleDemoLogin(account)}
                     >
                       {account.label}
                     </Button>
                   ))
                 ) : (
-                  <span className="text-xs text-slate-500">Demo-аккаунты отключены в production.</span>
+                  <span className="text-xs text-slate-500">Demo-аккаунты отключены переменной NEXT_PUBLIC_ENABLE_DEMO_LOGIN.</span>
                 )}
               </div>
             </div>
