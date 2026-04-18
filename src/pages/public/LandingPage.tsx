@@ -18,6 +18,8 @@ import { cx } from '@shared/lib/cx'
 
 const SLIDE_INTERVAL_MS = 10_000
 
+const ANALYTICS_SPARKLINE = [18, 22, 19, 28, 31, 26, 34, 30, 38, 42, 39, 48]
+
 type GeneralPartner = {
   id: string
   name: string
@@ -268,8 +270,7 @@ function TrustDot({ children }: { children: React.ReactNode }) {
 }
 
 function AnalyticsPreviewCard() {
-  const sparkline = [18, 22, 19, 28, 31, 26, 34, 30, 38, 42, 39, 48]
-  const { areaPath, linePath } = useMemo(() => buildSparkPaths(sparkline, 160, 56), [])
+  const { areaPath, linePath } = useMemo(() => buildSparkPaths(ANALYTICS_SPARKLINE, 160, 56), [])
 
   const activity = useMemo(
     () => [
@@ -471,15 +472,22 @@ function useAutoSlide(count: number, intervalMs: number, paused: boolean) {
 }
 
 function AutoProgress({ cycleKey, durationMs, paused }: { cycleKey: string; durationMs: number; paused: boolean }) {
+  return <AutoProgressInner key={cycleKey} durationMs={durationMs} paused={paused} />
+}
+
+function AutoProgressInner({ durationMs, paused }: { durationMs: number; paused: boolean }) {
   const [value, setValue] = useState(0)
   useEffect(() => {
-    setValue(0)
     if (paused) return
-    const id = window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => setValue(100))
+    let rafB = 0
+    const rafA = window.requestAnimationFrame(() => {
+      rafB = window.requestAnimationFrame(() => setValue(100))
     })
-    return () => window.cancelAnimationFrame(id)
-  }, [cycleKey, paused])
+    return () => {
+      window.cancelAnimationFrame(rafA)
+      if (rafB) window.cancelAnimationFrame(rafB)
+    }
+  }, [paused])
   return (
     <div className="h-0.5 w-full overflow-hidden bg-slate-100">
       <div
