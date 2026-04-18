@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Activity,
+  ArrowUpRight,
   Building2,
+  CheckCircle2,
   FileCheck2,
+  Globe2,
   MessageSquare,
   ShieldCheck,
   Sparkles,
@@ -221,17 +224,32 @@ const MODEST_PARTNERS: PartnerNews[] = [
 
 export function LandingPage() {
   return (
-    <div>
-      <section className="border-b border-border bg-white">
+    <div className="relative overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute -left-40 -top-40 size-[520px] rounded-full bg-brand-blue/10 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -right-32 top-40 size-[420px] rounded-full bg-brand-yellow/15 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute left-1/3 top-[55%] size-[380px] rounded-full bg-emerald-200/40 blur-3xl" />
+
+      <section className="relative border-b border-border">
         <Container className="py-14 sm:py-20">
-          <div className="grid items-start gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="mb-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-600 backdrop-blur-sm">
+              <Globe2 className="size-3.5 text-brand-blue" />
+              Silk Road Hub · B2B-платформа экспорта
+            </div>
+            <div className="inline-flex items-center gap-4 text-[12px] text-slate-600">
+              <TrustDot>1 248 компаний</TrustDot>
+              <TrustDot>доступ по верификации</TrustDot>
+            </div>
+          </div>
+
+          <div className="grid items-stretch gap-6 lg:grid-cols-[1.2fr_0.8fr]">
             <GeneralPartnersCarousel partners={GENERAL_PARTNERS} />
             <AnalyticsPreviewCard />
           </div>
         </Container>
       </section>
 
-      <section>
+      <section className="relative">
         <Container className="py-12 sm:py-16">
           <PartnersNewsCarousel partners={MODEST_PARTNERS} />
         </Container>
@@ -240,27 +258,41 @@ export function LandingPage() {
   )
 }
 
+function TrustDot({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="size-1.5 rounded-full bg-emerald-500" />
+      <span>{children}</span>
+    </span>
+  )
+}
+
 function AnalyticsPreviewCard() {
   const sparkline = [18, 22, 19, 28, 31, 26, 34, 30, 38, 42, 39, 48]
-  const sparkMax = Math.max(...sparkline)
+  const { areaPath, linePath } = useMemo(() => buildSparkPaths(sparkline, 160, 56), [])
 
   const activity = useMemo(
     () => [
-      { id: 'a1', icon: <MessageSquare className="size-3.5 text-brand-blue" />, text: 'Новый запрос от OOO «Текстильпром» · пшеница 5 кл.' },
-      { id: 'a2', icon: <FileCheck2 className="size-3.5 text-emerald-600" />, text: 'DealCase #DC-2418 · загружен инвойс и CMR' },
-      { id: 'a3', icon: <ShieldCheck className="size-3.5 text-amber-600" />, text: 'Продавец «KazFood» прошёл проверку · ISO 22000' },
+      { id: 'a1', dot: 'bg-brand-blue', icon: <MessageSquare className="size-3.5 text-brand-blue" />, text: 'Новый запрос · OOO «Текстильпром» — пшеница 5 кл.' },
+      { id: 'a2', dot: 'bg-emerald-500', icon: <FileCheck2 className="size-3.5 text-emerald-600" />, text: 'DealCase #DC-2418 · загружен инвойс и CMR' },
+      { id: 'a3', dot: 'bg-amber-500', icon: <ShieldCheck className="size-3.5 text-amber-600" />, text: 'Продавец «KazFood» прошёл проверку · ISO 22000' },
     ],
     [],
   )
 
   return (
-    <Card className="animate-text-reveal animate-text-reveal-delay-3 overflow-hidden opacity-0">
-      <div className="flex items-center justify-between border-b border-border bg-brand-yellow-soft px-5 py-4">
-        <div>
-          <div className="text-sm font-semibold text-slate-900">Как это работает</div>
-          <div className="mt-1 text-sm text-slate-700">Поиск → переговоры → сделка → документы</div>
+    <Card className="animate-text-reveal animate-text-reveal-delay-3 relative flex h-full flex-col overflow-hidden opacity-0 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.25)]">
+      <div className="relative flex items-center justify-between border-b border-border bg-gradient-to-r from-brand-yellow-soft via-white to-brand-yellow-soft/80 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="grid size-9 place-items-center rounded-xl bg-brand-blue/10 text-brand-blue">
+            <Activity className="size-4" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-slate-900">Как это работает</div>
+            <div className="mt-0.5 text-[12px] text-slate-600">Поиск → переговоры → сделка → документы</div>
+          </div>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
           <span className="relative flex size-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
@@ -277,6 +309,7 @@ function AnalyticsPreviewCard() {
             value="124"
             trend="+8%"
             tone="text-emerald-600"
+            ringClass="bg-brand-blue/5"
           />
           <MiniKpi
             icon={<MessageSquare className="size-4 text-amber-600" />}
@@ -284,6 +317,7 @@ function AnalyticsPreviewCard() {
             value="37"
             trend="+12%"
             tone="text-emerald-600"
+            ringClass="bg-amber-50"
           />
           <MiniKpi
             icon={<Building2 className="size-4 text-purple-600" />}
@@ -291,45 +325,51 @@ function AnalyticsPreviewCard() {
             value="1 248"
             trend="проверено"
             tone="text-slate-500"
+            ringClass="bg-purple-50"
           />
-          <MiniKpi
-            icon={<FileCheck2 className="size-4 text-emerald-600" />}
-            label="Документы в срок"
-            value="98%"
-            trend="SLA"
-            tone="text-slate-500"
-          />
+          <SlaRing value={98} label="Документы в срок" sublabel="SLA" />
         </div>
 
-        <div className="rounded-xl border border-border bg-white p-3">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-white via-white to-brand-blue/5 p-3">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-medium text-slate-700">Сделки по неделям</div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600">
-              <TrendingUp className="size-3.5" />
+            <div className="text-xs font-semibold text-slate-700">Сделки по неделям</div>
+            <div className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+              <TrendingUp className="size-3" />
               рост 2,6×
             </div>
           </div>
-          <div className="mt-2 flex h-16 items-end gap-1">
-            {sparkline.map((v, i) => (
-              <div
-                key={i}
-                className="flex-1 rounded-sm bg-gradient-to-t from-brand-blue/70 to-brand-blue-2"
-                style={{ height: `${(v / sparkMax) * 100}%` }}
-                aria-hidden="true"
-              />
-            ))}
+          <svg viewBox="0 0 160 60" className="mt-2 h-16 w-full overflow-visible" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-brand-blue-2, #2563eb)" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="var(--color-brand-blue-2, #2563eb)" stopOpacity="0" />
+              </linearGradient>
+              <linearGradient id="sparkStroke" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="var(--color-brand-blue, #1d4ed8)" />
+                <stop offset="100%" stopColor="var(--color-brand-yellow, #f59e0b)" />
+              </linearGradient>
+            </defs>
+            <path d={areaPath} fill="url(#sparkFill)" />
+            <path d={linePath} fill="none" stroke="url(#sparkStroke)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div className="mt-1 flex items-center justify-between text-[10px] font-medium text-slate-400">
+            <span>нед. 1</span>
+            <span>нед. 12</span>
           </div>
         </div>
 
         <div className="rounded-xl border border-border bg-white p-3">
-          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-700">
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-700">
             <Zap className="size-3.5 text-amber-500" />
             Последние события
           </div>
-          <ul className="space-y-1.5">
+          <ul className="space-y-2">
             {activity.map((item) => (
-              <li key={item.id} className="flex items-start gap-2 text-[12px] text-slate-600">
-                <span className="mt-0.5">{item.icon}</span>
+              <li key={item.id} className="flex items-start gap-2.5 text-[12px] text-slate-600">
+                <span className="relative mt-1 flex size-2 shrink-0">
+                  <span className={cx('absolute inline-flex h-full w-full animate-ping rounded-full opacity-40', item.dot)} />
+                  <span className={cx('relative inline-flex size-2 rounded-full', item.dot)} />
+                </span>
                 <span className="leading-snug">{item.text}</span>
               </li>
             ))}
@@ -340,76 +380,198 @@ function AnalyticsPreviewCard() {
   )
 }
 
+function buildSparkPaths(values: number[], width: number, height: number) {
+  const max = Math.max(...values)
+  const min = Math.min(...values)
+  const span = max - min || 1
+  const stepX = values.length > 1 ? width / (values.length - 1) : width
+  const points = values.map((v, i) => {
+    const x = i * stepX
+    const y = height - ((v - min) / span) * (height - 4) - 2
+    return [x, y] as const
+  })
+  const linePath = points
+    .map(([x, y], i) => (i === 0 ? `M ${x.toFixed(2)} ${y.toFixed(2)}` : `L ${x.toFixed(2)} ${y.toFixed(2)}`))
+    .join(' ')
+  const areaPath = `${linePath} L ${width} ${height} L 0 ${height} Z`
+  return { linePath, areaPath }
+}
+
 function MiniKpi({
   icon,
   label,
   value,
   trend,
   tone,
+  ringClass,
 }: {
   icon: React.ReactNode
   label: string
   value: string
   trend: string
   tone: string
+  ringClass: string
 }) {
   return (
-    <div className="rounded-xl border border-border bg-white p-3">
-      <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500">
+    <div className="group relative overflow-hidden rounded-xl border border-border bg-white p-3 transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-16px_rgba(15,23,42,0.35)]">
+      <div aria-hidden className={cx('absolute -right-6 -top-6 size-16 rounded-full opacity-80', ringClass)} />
+      <div className="relative flex items-center gap-2 text-[11px] font-medium text-slate-500">
         {icon}
         {label}
       </div>
-      <div className="mt-1 text-xl font-bold text-slate-900">{value}</div>
-      <div className={cx('mt-0.5 text-[11px] font-medium', tone)}>{trend}</div>
+      <div className="relative mt-1 text-xl font-bold text-slate-900">{value}</div>
+      <div className={cx('relative mt-0.5 text-[11px] font-semibold', tone)}>{trend}</div>
     </div>
   )
 }
 
-function useAutoSlide(count: number, intervalMs: number) {
+function SlaRing({ value, label, sublabel }: { value: number; label: string; sublabel: string }) {
+  const radius = 16
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference * (1 - value / 100)
+
+  return (
+    <div className="group relative flex items-center gap-3 overflow-hidden rounded-xl border border-border bg-white p-3 transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-16px_rgba(15,23,42,0.35)]">
+      <div aria-hidden className="absolute -right-6 -top-6 size-16 rounded-full bg-emerald-50 opacity-80" />
+      <svg viewBox="0 0 40 40" className="relative size-10 -rotate-90">
+        <circle cx="20" cy="20" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="4" />
+        <circle
+          cx="20"
+          cy="20"
+          r={radius}
+          fill="none"
+          stroke="#10b981"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+        />
+      </svg>
+      <div className="relative min-w-0">
+        <div className="text-[11px] font-medium text-slate-500">{label}</div>
+        <div className="flex items-baseline gap-1">
+          <span className="text-xl font-bold text-slate-900">{value}%</span>
+          <span className="text-[11px] font-semibold text-emerald-600">{sublabel}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function useAutoSlide(count: number, intervalMs: number, paused: boolean) {
   const [index, setIndex] = useState(0)
   useEffect(() => {
-    if (count <= 1) return
+    if (count <= 1 || paused) return
     const id = window.setInterval(() => {
       setIndex((current) => (current + 1) % count)
     }, intervalMs)
     return () => window.clearInterval(id)
-  }, [count, intervalMs])
+  }, [count, intervalMs, paused])
   return [index, setIndex] as const
 }
 
+function AutoProgress({ cycleKey, durationMs, paused }: { cycleKey: string; durationMs: number; paused: boolean }) {
+  const [value, setValue] = useState(0)
+  useEffect(() => {
+    setValue(0)
+    if (paused) return
+    const id = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setValue(100))
+    })
+    return () => window.cancelAnimationFrame(id)
+  }, [cycleKey, paused])
+  return (
+    <div className="h-0.5 w-full overflow-hidden bg-slate-100">
+      <div
+        className="h-full bg-gradient-to-r from-brand-blue via-brand-blue-2 to-brand-yellow"
+        style={{
+          width: `${value}%`,
+          transitionProperty: 'width',
+          transitionDuration: paused ? '0ms' : `${durationMs}ms`,
+          transitionTimingFunction: 'linear',
+        }}
+      />
+    </div>
+  )
+}
+
 function GeneralPartnersCarousel({ partners }: { partners: GeneralPartner[] }) {
-  const [index, setIndex] = useAutoSlide(partners.length, SLIDE_INTERVAL_MS)
+  const [paused, setPaused] = useState(false)
+  const [index, setIndex] = useAutoSlide(partners.length, SLIDE_INTERVAL_MS, paused)
 
   return (
-    <div className="animate-text-reveal rounded-2xl border border-border bg-white opacity-0 motion-card overflow-hidden">
-      <div className="flex items-center justify-between border-b border-border bg-brand-yellow-soft px-6 py-4">
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-700">Генеральные партнёры</div>
-          <div className="mt-0.5 text-sm text-slate-700">Институциональная поддержка экспорта</div>
+    <div
+      className="group/carousel animate-text-reveal relative flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-white opacity-0 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.25)] motion-card"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-brand-yellow-soft via-white to-brand-yellow-soft/70 px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="grid size-9 place-items-center rounded-xl bg-brand-yellow/20 text-brand-yellow">
+            <Sparkles className="size-4" />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-700">Генеральные партнёры</div>
+            <div className="mt-0.5 text-sm text-slate-700">Институциональная поддержка экспорта</div>
+          </div>
         </div>
-        <div className="text-[11px] font-medium text-slate-600">
-          {index + 1} / {partners.length}
+        <div className="rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-border">
+          {String(index + 1).padStart(2, '0')} / {String(partners.length).padStart(2, '0')}
         </div>
       </div>
 
-      <div className="relative overflow-hidden">
+      <div className="relative flex-1 overflow-hidden">
         <div
-          className="flex transition-transform duration-700 ease-out"
+          className="flex h-full transition-transform duration-700 ease-out"
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
-          {partners.map((p) => (
-            <div key={p.id} className="w-full shrink-0">
-              <div className={cx('flex flex-col items-center gap-5 bg-gradient-to-br px-6 py-10 text-center sm:flex-row sm:gap-6 sm:px-10 sm:py-12 sm:text-left', p.accent)}>
-                <div className="grid size-20 shrink-0 place-items-center rounded-2xl bg-white text-xl font-bold text-slate-900 shadow-sm ring-1 ring-border">
-                  {p.initials}
-                </div>
-                <div className="flex-1">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-border">
-                    <Sparkles className="size-3 text-brand-yellow" />
-                    {p.badge}
+          {partners.map((p, i) => (
+            <div key={p.id} className="relative w-full shrink-0">
+              <div className={cx('relative h-full overflow-hidden bg-gradient-to-br px-6 py-10 sm:px-12 sm:py-14', p.accent)}>
+                <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-white/50 blur-2xl" />
+                <div aria-hidden className="pointer-events-none absolute -bottom-20 -left-10 size-64 rounded-full bg-white/40 blur-3xl" />
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 opacity-[0.35]"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(15,23,42,0.15) 1px, transparent 0)',
+                    backgroundSize: '22px 22px',
+                    maskImage: 'linear-gradient(to bottom right, rgba(0,0,0,0.6), transparent 70%)',
+                  }}
+                />
+
+                <div className="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 -m-2 rounded-[26px] bg-gradient-to-br from-white to-white/40 blur-md" />
+                    <div className="relative grid size-24 place-items-center rounded-3xl bg-white text-2xl font-bold text-slate-900 shadow-[0_8px_24px_-8px_rgba(15,23,42,0.25)] ring-1 ring-border">
+                      {p.initials}
+                    </div>
                   </div>
-                  <div className="mt-3 text-2xl font-semibold text-slate-900 sm:text-3xl">{p.name}</div>
-                  <div className="mt-2 text-sm text-slate-600 sm:text-base">{p.tagline}</div>
+
+                  <div className="flex-1">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-700 ring-1 ring-border backdrop-blur-sm">
+                      <span className="size-1.5 rounded-full bg-brand-yellow" />
+                      {p.badge}
+                    </div>
+                    <div className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-[2.25rem] sm:leading-[1.1]">
+                      {p.name}
+                    </div>
+                    <div className="mt-2 max-w-md text-sm text-slate-700 sm:text-base">{p.tagline}</div>
+
+                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-[12px] font-semibold text-white transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                      >
+                        Узнать о партнёрстве
+                        <ArrowUpRight className="size-3.5" />
+                      </button>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[11px] font-medium text-slate-600 ring-1 ring-border">
+                        <CheckCircle2 className="size-3 text-emerald-600" />
+                        Верифицирован · Партнёр #{i + 1}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -417,66 +579,107 @@ function GeneralPartnersCarousel({ partners }: { partners: GeneralPartner[] }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-1.5 border-t border-border px-4 py-3">
-        {partners.map((p, i) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => setIndex(i)}
-            className={cx(
-              'h-1.5 rounded-full transition-all duration-300',
-              i === index ? 'w-10 bg-brand-blue' : 'w-1.5 bg-slate-300 hover:bg-slate-400',
-            )}
-            aria-label={`Показать партнёра ${p.name}`}
-          />
-        ))}
+      <div>
+        <AutoProgress cycleKey={`gen-${index}-${paused}`} durationMs={SLIDE_INTERVAL_MS} paused={paused} />
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
+          <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+            {paused ? 'пауза — наведение' : 'авто-слайд 10 сек'}
+          </div>
+          <div className="flex items-center gap-1.5">
+            {partners.map((p, i) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setIndex(i)}
+                className={cx(
+                  'h-1.5 rounded-full transition-all duration-300',
+                  i === index ? 'w-10 bg-brand-blue' : 'w-1.5 bg-slate-300 hover:bg-slate-400',
+                )}
+                aria-label={`Показать партнёра ${p.name}`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
 function PartnersNewsCarousel({ partners }: { partners: PartnerNews[] }) {
-  const [index, setIndex] = useAutoSlide(partners.length, SLIDE_INTERVAL_MS)
+  const [paused, setPaused] = useState(false)
+  const [index, setIndex] = useAutoSlide(partners.length, SLIDE_INTERVAL_MS, paused)
 
   return (
-    <div className="mt-10">
-      <div className="mb-3 flex items-end justify-between">
+    <div className="relative">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Сервисные партнёры</div>
-          <div className="mt-1 text-sm text-slate-600">Новости и предложения логистики, страхования, таможни и сертификации.</div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+            <span className="size-1.5 rounded-full bg-brand-blue" />
+            Сервисные партнёры
+          </div>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Логистика, страхование, таможня и сертификация — рядом со сделкой
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm text-slate-600">
+            Новости и предложения 10 проверенных партнёров. Автопереход каждые 10 секунд — наведите, чтобы поставить на паузу.
+          </p>
         </div>
-        <div className="text-[11px] text-slate-500">
-          {index + 1} / {partners.length}
+        <div className="text-right">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Партнёр</div>
+          <div className="text-2xl font-bold tabular-nums text-slate-900">
+            {String(index + 1).padStart(2, '0')}
+            <span className="text-slate-400"> / {String(partners.length).padStart(2, '0')}</span>
+          </div>
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-white">
+      <div
+        className="group/news relative overflow-hidden rounded-3xl border border-border bg-white shadow-[0_20px_60px_-30px_rgba(15,23,42,0.25)]"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+      >
         <div
           className="flex transition-transform duration-700 ease-out"
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
           {partners.map((partner) => (
-            <div key={partner.id} className="w-full shrink-0 px-5 py-6 sm:px-6">
-              <div className="mb-4 flex items-center gap-3">
-                <div className={cx('grid size-10 place-items-center rounded-xl text-sm font-bold', partner.accent)}>
-                  {partner.initials}
+            <div key={partner.id} className="w-full shrink-0 px-5 py-6 sm:px-7 sm:py-7">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className={cx('grid size-12 place-items-center rounded-2xl text-base font-bold ring-1 ring-border', partner.accent)}>
+                    {partner.initials}
+                  </div>
+                  <div>
+                    <div className="text-base font-semibold text-slate-900">{partner.name}</div>
+                    <div className="mt-0.5 inline-flex items-center gap-1.5 text-[12px] text-slate-500">
+                      <span className="size-1.5 rounded-full bg-brand-blue" />
+                      {partner.category}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">{partner.name}</div>
-                  <div className="text-xs text-slate-500">{partner.category}</div>
-                </div>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-slate-50"
+                >
+                  Все новости партнёра
+                  <ArrowUpRight className="size-3.5" />
+                </button>
               </div>
 
-              <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 {partner.news.map((item, i) => (
                   <li
                     key={i}
-                    className="rounded-xl border border-border bg-white p-3 text-sm text-slate-700 transition-shadow duration-300 hover:shadow-sm"
+                    className="group/card relative flex flex-col overflow-hidden rounded-2xl border border-border bg-white p-4 transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_16px_32px_-20px_rgba(15,23,42,0.35)]"
                   >
-                    <div className="mb-1 inline-flex size-5 items-center justify-center rounded-md bg-slate-100 text-[10px] font-semibold text-slate-500">
-                      {i + 1}
+                    <div className="absolute inset-x-0 top-0 h-1 origin-left scale-x-0 bg-gradient-to-r from-brand-blue via-brand-blue-2 to-brand-yellow transition-transform duration-300 group-hover/card:scale-x-100" />
+                    <div className="flex items-center justify-between">
+                      <div className={cx('inline-flex size-7 items-center justify-center rounded-lg text-[11px] font-bold', partner.accent)}>
+                        {i + 1}
+                      </div>
+                      <ArrowUpRight className="size-3.5 text-slate-300 transition-colors duration-200 group-hover/card:text-slate-700" />
                     </div>
-                    <div className="text-[13px] leading-snug text-slate-700">{item}</div>
+                    <div className="mt-3 text-[13px] leading-snug text-slate-700">{item}</div>
                   </li>
                 ))}
               </ul>
@@ -484,19 +687,25 @@ function PartnersNewsCarousel({ partners }: { partners: PartnerNews[] }) {
           ))}
         </div>
 
-        <div className="flex items-center justify-center gap-1.5 border-t border-border bg-white px-4 py-3">
-          {partners.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setIndex(i)}
-              className={cx(
-                'h-1.5 rounded-full transition-all duration-300',
-                i === index ? 'w-6 bg-brand-blue' : 'w-1.5 bg-slate-300 hover:bg-slate-400',
-              )}
-              aria-label={`Показать партнёра ${p.name}`}
-            />
-          ))}
+        <AutoProgress cycleKey={`news-${index}-${paused}`} durationMs={SLIDE_INTERVAL_MS} paused={paused} />
+        <div className="flex items-center justify-between gap-3 border-t border-border bg-slate-50/60 px-5 py-3">
+          <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+            {paused ? 'пауза — наведение' : 'авто-слайд 10 сек'}
+          </div>
+          <div className="flex items-center gap-1.5">
+            {partners.map((p, i) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setIndex(i)}
+                className={cx(
+                  'h-1.5 rounded-full transition-all duration-300',
+                  i === index ? 'w-6 bg-brand-blue' : 'w-1.5 bg-slate-300 hover:bg-slate-400',
+                )}
+                aria-label={`Показать партнёра ${p.name}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>
