@@ -1,24 +1,25 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
-  Activity,
   ArrowUpRight,
-  Building2,
   CheckCircle2,
-  FileCheck2,
+  Clock3,
   Globe2,
-  MessageSquare,
-  ShieldCheck,
+  Newspaper,
   Sparkles,
-  TrendingUp,
-  Zap,
 } from 'lucide-react'
 import { Container } from '@widgets/layout/Container'
+import { Badge } from '@shared/ui/Badge'
 import { Card, CardContent } from '@shared/ui/Card'
+import { applyOfflineImageFallback } from '@shared/ui/imageFallback'
 import { cx } from '@shared/lib/cx'
+import {
+  getFeaturedPost,
+  getPopularPosts,
+  getTypeLabel,
+} from '@features/analytics/analyticsData'
 
 const SLIDE_INTERVAL_MS = 10_000
-
-const ANALYTICS_SPARKLINE = [18, 22, 19, 28, 31, 26, 34, 30, 38, 42, 39, 48]
 
 type GeneralPartner = {
   id: string
@@ -244,7 +245,7 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div className="grid items-stretch gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="grid items-stretch gap-6 lg:grid-cols-2">
             <GeneralPartnersCarousel partners={GENERAL_PARTNERS} />
             <AnalyticsPreviewCard />
           </div>
@@ -270,192 +271,107 @@ function TrustDot({ children }: { children: React.ReactNode }) {
 }
 
 function AnalyticsPreviewCard() {
-  const { areaPath, linePath } = useMemo(() => buildSparkPaths(ANALYTICS_SPARKLINE, 160, 56), [])
-
-  const activity = useMemo(
-    () => [
-      { id: 'a1', dot: 'bg-brand-blue', icon: <MessageSquare className="size-3.5 text-brand-blue" />, text: 'Новый запрос · OOO «Текстильпром» — пшеница 5 кл.' },
-      { id: 'a2', dot: 'bg-emerald-500', icon: <FileCheck2 className="size-3.5 text-emerald-600" />, text: 'DealCase #DC-2418 · загружен инвойс и CMR' },
-      { id: 'a3', dot: 'bg-amber-500', icon: <ShieldCheck className="size-3.5 text-amber-600" />, text: 'Продавец «KazFood» прошёл проверку · ISO 22000' },
-    ],
-    [],
-  )
+  const featured = getFeaturedPost()
+  const popular = getPopularPosts(4)
 
   return (
     <Card className="animate-text-reveal animate-text-reveal-delay-3 relative flex h-full flex-col overflow-hidden opacity-0 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.25)]">
       <div className="relative flex items-center justify-between border-b border-border bg-gradient-to-r from-brand-yellow-soft via-white to-brand-yellow-soft/80 px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="grid size-9 place-items-center rounded-xl bg-brand-blue/10 text-brand-blue">
-            <Activity className="size-4" />
+            <Newspaper className="size-4" />
           </div>
           <div>
-            <div className="text-sm font-semibold text-slate-900">Как это работает</div>
-            <div className="mt-0.5 text-[12px] text-slate-600">Поиск → переговоры → сделка → документы</div>
+            <div className="text-sm font-semibold text-slate-900">Аналитика</div>
+            <div className="mt-0.5 text-[12px] text-slate-600">Разборы, кейсы и новости для экспортёров и байеров</div>
           </div>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
-          <span className="relative flex size-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-          </span>
-          live
-        </span>
+        <Link
+          to="/analytics"
+          className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-border transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-white"
+        >
+          Все материалы
+          <ArrowUpRight className="size-3.5" />
+        </Link>
       </div>
 
-      <CardContent className="grid gap-3">
-        <div className="grid grid-cols-2 gap-2">
-          <MiniKpi
-            icon={<Activity className="size-4 text-brand-blue" />}
-            label="Активные сделки"
-            value="124"
-            trend="+8%"
-            tone="text-emerald-600"
-            ringClass="bg-brand-blue/5"
-          />
-          <MiniKpi
-            icon={<MessageSquare className="size-4 text-amber-600" />}
-            label="Новые запросы"
-            value="37"
-            trend="+12%"
-            tone="text-emerald-600"
-            ringClass="bg-amber-50"
-          />
-          <MiniKpi
-            icon={<Building2 className="size-4 text-purple-600" />}
-            label="Контрагентов"
-            value="1 248"
-            trend="проверено"
-            tone="text-slate-500"
-            ringClass="bg-purple-50"
-          />
-          <SlaRing value={98} label="Документы в срок" sublabel="SLA" />
-        </div>
-
-        <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-white via-white to-brand-blue/5 p-3">
-          <div className="flex items-center justify-between">
-            <div className="text-xs font-semibold text-slate-700">Сделки по неделям</div>
-            <div className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-              <TrendingUp className="size-3" />
-              рост 2,6×
+      <CardContent className="flex flex-1 flex-col gap-4">
+        {featured && (
+          <Link
+            to={`/analytics/${featured.slug}`}
+            className="group/feat block overflow-hidden rounded-2xl border border-border bg-white transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-20px_rgba(15,23,42,0.35)]"
+          >
+            <div className="relative aspect-[21/10] overflow-hidden bg-slate-100">
+              <img
+                src={featured.cover_image_url}
+                alt=""
+                className="h-full w-full object-cover transition-transform duration-500 group-hover/feat:scale-[1.03]"
+                onError={applyOfflineImageFallback}
+              />
+              <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent" />
+              <Badge tone="warning" className="absolute left-3 top-3 shadow-sm">
+                {getTypeLabel(featured.type)}
+              </Badge>
+              <div className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-slate-700 backdrop-blur-sm">
+                <Clock3 className="size-3" />
+                {featured.reading_time_min} мин
+              </div>
             </div>
-          </div>
-          <svg viewBox="0 0 160 60" className="mt-2 h-16 w-full overflow-visible" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-brand-blue-2, #2563eb)" stopOpacity="0.35" />
-                <stop offset="100%" stopColor="var(--color-brand-blue-2, #2563eb)" stopOpacity="0" />
-              </linearGradient>
-              <linearGradient id="sparkStroke" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="var(--color-brand-blue, #1d4ed8)" />
-                <stop offset="100%" stopColor="var(--color-brand-yellow, #f59e0b)" />
-              </linearGradient>
-            </defs>
-            <path d={areaPath} fill="url(#sparkFill)" />
-            <path d={linePath} fill="none" stroke="url(#sparkStroke)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <div className="mt-1 flex items-center justify-between text-[10px] font-medium text-slate-400">
-            <span>нед. 1</span>
-            <span>нед. 12</span>
-          </div>
-        </div>
+            <div className="p-4">
+              <h3 className="text-lg font-semibold leading-snug text-slate-900 sm:text-xl">
+                {featured.title}
+              </h3>
+              <p className="mt-1.5 line-clamp-2 text-sm text-slate-600">{featured.excerpt}</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-blue">
+                Читать
+                <ArrowUpRight className="size-3.5" />
+              </span>
+            </div>
+          </Link>
+        )}
 
-        <div className="rounded-xl border border-border bg-white p-3">
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-700">
-            <Zap className="size-3.5 text-amber-500" />
-            Последние события
+        {popular.length > 0 && (
+          <div className="flex flex-1 flex-col">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Популярное</div>
+              <Link to="/analytics" className="text-[11px] font-medium text-slate-500 hover:text-slate-700">
+                смотреть все →
+              </Link>
+            </div>
+            <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-white">
+              {popular.map((post, i) => (
+                <li key={post.id}>
+                  <Link
+                    to={`/analytics/${post.slug}`}
+                    className="group/row flex items-start gap-3 px-4 py-3 transition-colors duration-200 hover:bg-slate-50"
+                  >
+                    <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[11px] font-bold text-slate-600 group-hover/row:bg-brand-blue/10 group-hover/row:text-brand-blue">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="line-clamp-2 text-sm font-medium leading-snug text-slate-900 group-hover/row:text-brand-blue">
+                        {post.title}
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
+                        <span className="font-semibold text-slate-600">{getTypeLabel(post.type)}</span>
+                        <span>·</span>
+                        <span>{post.category}</span>
+                        <span>·</span>
+                        <span className="inline-flex items-center gap-1">
+                          <Clock3 className="size-3" />
+                          {post.reading_time_min} мин
+                        </span>
+                      </div>
+                    </div>
+                    <ArrowUpRight className="mt-1 size-4 shrink-0 text-slate-300 transition-colors duration-200 group-hover/row:text-brand-blue" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul className="space-y-2">
-            {activity.map((item) => (
-              <li key={item.id} className="flex items-start gap-2.5 text-[12px] text-slate-600">
-                <span className="relative mt-1 flex size-2 shrink-0">
-                  <span className={cx('absolute inline-flex h-full w-full animate-ping rounded-full opacity-40', item.dot)} />
-                  <span className={cx('relative inline-flex size-2 rounded-full', item.dot)} />
-                </span>
-                <span className="leading-snug">{item.text}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        )}
       </CardContent>
     </Card>
-  )
-}
-
-function buildSparkPaths(values: number[], width: number, height: number) {
-  const max = Math.max(...values)
-  const min = Math.min(...values)
-  const span = max - min || 1
-  const stepX = values.length > 1 ? width / (values.length - 1) : width
-  const points = values.map((v, i) => {
-    const x = i * stepX
-    const y = height - ((v - min) / span) * (height - 4) - 2
-    return [x, y] as const
-  })
-  const linePath = points
-    .map(([x, y], i) => (i === 0 ? `M ${x.toFixed(2)} ${y.toFixed(2)}` : `L ${x.toFixed(2)} ${y.toFixed(2)}`))
-    .join(' ')
-  const areaPath = `${linePath} L ${width} ${height} L 0 ${height} Z`
-  return { linePath, areaPath }
-}
-
-function MiniKpi({
-  icon,
-  label,
-  value,
-  trend,
-  tone,
-  ringClass,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-  trend: string
-  tone: string
-  ringClass: string
-}) {
-  return (
-    <div className="group relative overflow-hidden rounded-xl border border-border bg-white p-3 transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-16px_rgba(15,23,42,0.35)]">
-      <div aria-hidden className={cx('absolute -right-6 -top-6 size-16 rounded-full opacity-80', ringClass)} />
-      <div className="relative flex items-center gap-2 text-[11px] font-medium text-slate-500">
-        {icon}
-        {label}
-      </div>
-      <div className="relative mt-1 text-xl font-bold text-slate-900">{value}</div>
-      <div className={cx('relative mt-0.5 text-[11px] font-semibold', tone)}>{trend}</div>
-    </div>
-  )
-}
-
-function SlaRing({ value, label, sublabel }: { value: number; label: string; sublabel: string }) {
-  const radius = 16
-  const circumference = 2 * Math.PI * radius
-  const offset = circumference * (1 - value / 100)
-
-  return (
-    <div className="group relative flex items-center gap-3 overflow-hidden rounded-xl border border-border bg-white p-3 transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-16px_rgba(15,23,42,0.35)]">
-      <div aria-hidden className="absolute -right-6 -top-6 size-16 rounded-full bg-emerald-50 opacity-80" />
-      <svg viewBox="0 0 40 40" className="relative size-10 -rotate-90">
-        <circle cx="20" cy="20" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="4" />
-        <circle
-          cx="20"
-          cy="20"
-          r={radius}
-          fill="none"
-          stroke="#10b981"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-        />
-      </svg>
-      <div className="relative min-w-0">
-        <div className="text-[11px] font-medium text-slate-500">{label}</div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-xl font-bold text-slate-900">{value}%</span>
-          <span className="text-[11px] font-semibold text-emerald-600">{sublabel}</span>
-        </div>
-      </div>
-    </div>
   )
 }
 
