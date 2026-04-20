@@ -31,7 +31,6 @@ export function PublicLayout() {
           <div className="flex items-center gap-8">
             <NavLink to="/" className="flex items-center gap-3 rounded-xl motion-tap transition-opacity duration-[var(--duration-medium)] hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/30 focus-visible:ring-offset-2">
               <Logo size="md" />
-              <span className="hidden text-sm font-semibold tracking-tight text-slate-900 sm:inline">Silk Road Hub</span>
             </NavLink>
 
             <nav className="hidden items-center gap-1 md:flex">
@@ -41,7 +40,7 @@ export function PublicLayout() {
                   to={item.to}
                   className={({ isActive }) =>
                     cx(
-                      'rounded-xl px-3 py-2 text-sm font-medium text-slate-700 motion-tap transition-[color,background-color] duration-[var(--duration-medium)] ease-[var(--ease-primary)] hover:bg-slate-50',
+                      'whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium text-slate-700 motion-tap transition-[color,background-color] duration-[var(--duration-medium)] ease-[var(--ease-primary)] hover:bg-slate-50',
                       isActive ? 'bg-slate-100 text-slate-900' : null,
                     )
                   }

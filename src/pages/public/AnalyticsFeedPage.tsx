@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router-dom'
+import { CalendarDays, MapPin } from 'lucide-react'
 import { Container } from '@widgets/layout/Container'
 import { Badge } from '@shared/ui/Badge'
 import { ButtonLink } from '@shared/ui/ButtonLink'
@@ -23,9 +24,60 @@ function formatDate(iso: string): string {
   })
 }
 
+type ForumAnnouncement = {
+  id: string
+  title: string
+  dateLabel: string
+  city: string
+  level: 'Международный' | 'Республиканский'
+  status: string
+  summary: string
+}
+
+const FORUM_ANNOUNCEMENTS: ForumAnnouncement[] = [
+  {
+    id: 'forum-astana-trade-2026',
+    title: 'Astana Trade Forum 2026',
+    dateLabel: '12-13 мая 2026',
+    city: 'Астана',
+    level: 'Международный',
+    status: 'Регистрация открыта',
+    summary: 'Экспортные контракты и B2B-встречи с международными закупщиками.',
+  },
+  {
+    id: 'agro-export-kz-2026',
+    title: 'Agro Export Kazakhstan',
+    dateLabel: '27 мая 2026',
+    city: 'Костанай',
+    level: 'Республиканский',
+    status: 'Приём заявок до 15 мая',
+    summary: 'Форум по агроэкспорту: логистика, сертификация и выход на новые рынки.',
+  },
+  {
+    id: 'eurasia-logistics-forum-2026',
+    title: 'Eurasia Logistics Forum',
+    dateLabel: '6-7 июня 2026',
+    city: 'Алматы',
+    level: 'Международный',
+    status: 'Слоты B2B ограничены',
+    summary: 'Маршруты, страхование и цифровое сопровождение международных сделок.',
+  },
+  {
+    id: 'industry-invest-week-2026',
+    title: 'Industry & Invest Week',
+    dateLabel: '18 июня 2026',
+    city: 'Караганда',
+    level: 'Республиканский',
+    status: 'Формируется программа',
+    summary: 'Презентации инвестпроектов и встречи с институтами развития.',
+  },
+]
+
 export function AnalyticsFeedPage() {
   const [params, setParams] = useSearchParams()
   const tag = params.get('tag') ?? ''
+  const view = params.get('view') ?? 'analytics'
+  const announcementsView = view === 'announcements'
 
   const featured = getFeaturedPost()
   const popular = getPopularPosts(5)
@@ -40,11 +92,39 @@ export function AnalyticsFeedPage() {
         Разборы, кейсы и новости для экспортёров и байеров.
       </p>
 
-      {/* Tag chips */}
       <div className="mt-6 flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => setParams({})}
+          onClick={() => setParams(tag ? { view: 'analytics', tag } : { view: 'analytics' })}
+          className={cx(
+            'motion-tap rounded-xl border px-3 py-1.5 text-sm font-medium transition-[border-color,background-color,color] duration-[var(--duration-medium)] ease-[var(--ease-primary)]',
+            !announcementsView
+              ? 'border-brand-blue bg-brand-yellow-soft text-slate-900'
+              : 'border-border bg-white text-slate-700 hover:bg-slate-50',
+          )}
+        >
+          Материалы
+        </button>
+        <button
+          type="button"
+          onClick={() => setParams({ view: 'announcements' })}
+          className={cx(
+            'motion-tap rounded-xl border px-3 py-1.5 text-sm font-medium transition-[border-color,background-color,color] duration-[var(--duration-medium)] ease-[var(--ease-primary)]',
+            announcementsView
+              ? 'border-brand-blue bg-brand-yellow-soft text-slate-900'
+              : 'border-border bg-white text-slate-700 hover:bg-slate-50',
+          )}
+        >
+          Объявления форумов
+        </button>
+      </div>
+
+      {/* Tag chips */}
+      {!announcementsView ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setParams({ view: 'analytics' })}
           className={cx(
             'motion-tap rounded-xl border px-3 py-1.5 text-sm font-medium transition-[border-color,background-color,color] duration-[var(--duration-medium)] ease-[var(--ease-primary)]',
             !tag
@@ -58,7 +138,7 @@ export function AnalyticsFeedPage() {
           <button
             key={t}
             type="button"
-            onClick={() => setParams({ tag: t })}
+            onClick={() => setParams({ view: 'analytics', tag: t })}
             className={cx(
               'motion-tap rounded-xl border px-3 py-1.5 text-sm font-medium transition-[border-color,background-color,color] duration-[var(--duration-medium)] ease-[var(--ease-primary)]',
               tag === t
@@ -69,9 +149,38 @@ export function AnalyticsFeedPage() {
             {t}
           </button>
         ))}
-      </div>
+        </div>
+      ) : null}
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_300px]">
+      {announcementsView ? (
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          {FORUM_ANNOUNCEMENTS.map((announcement) => (
+            <Card key={announcement.id} className="overflow-hidden">
+              <CardContent className="p-5">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+                    <CalendarDays className="size-3.5 text-brand-blue" />
+                    {announcement.dateLabel}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+                    <MapPin className="size-3.5 text-brand-blue" />
+                    {announcement.city}
+                  </span>
+                  <span className="inline-flex rounded-full bg-brand-blue/10 px-2.5 py-1 text-[11px] font-semibold text-brand-blue">
+                    {announcement.level}
+                  </span>
+                </div>
+                <h2 className="text-lg font-semibold text-slate-900">{announcement.title}</h2>
+                <p className="mt-2 text-sm text-slate-600">{announcement.summary}</p>
+                <div className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                  {announcement.status}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_300px]">
         <div className="min-w-0 space-y-8">
           {/* Featured */}
           {featured && !tag && (
@@ -156,6 +265,7 @@ export function AnalyticsFeedPage() {
           </Card>
         </aside>
       </div>
+      )}
     </Container>
   )
 }
