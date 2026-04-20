@@ -2,22 +2,16 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowUpRight,
+  CalendarDays,
   CheckCircle2,
-  Clock3,
   Globe2,
-  Newspaper,
+  Megaphone,
+  MapPin,
   Sparkles,
 } from 'lucide-react'
 import { Container } from '@widgets/layout/Container'
-import { Badge } from '@shared/ui/Badge'
 import { Card, CardContent } from '@shared/ui/Card'
-import { applyOfflineImageFallback } from '@shared/ui/imageFallback'
 import { cx } from '@shared/lib/cx'
-import {
-  getFeaturedPost,
-  getPopularPosts,
-  getTypeLabel,
-} from '@features/analytics/analyticsData'
 
 const SLIDE_INTERVAL_MS = 10_000
 
@@ -225,6 +219,55 @@ const MODEST_PARTNERS: PartnerNews[] = [
   },
 ]
 
+type ForumAnnouncement = {
+  id: string
+  title: string
+  dateLabel: string
+  city: string
+  level: 'Международный' | 'Республиканский'
+  status: string
+  summary: string
+}
+
+const UPCOMING_ANNOUNCEMENTS: ForumAnnouncement[] = [
+  {
+    id: 'forum-astana-trade-2026',
+    title: 'Astana Trade Forum 2026',
+    dateLabel: '12-13 мая 2026',
+    city: 'Астана',
+    level: 'Международный',
+    status: 'Регистрация открыта',
+    summary: 'Экспортные контракты, B2B-встречи с закупщиками из СНГ, ЕС и Ближнего Востока.',
+  },
+  {
+    id: 'agro-export-kz-2026',
+    title: 'Agro Export Kazakhstan',
+    dateLabel: '27 мая 2026',
+    city: 'Костанай',
+    level: 'Республиканский',
+    status: 'Приём заявок до 15 мая',
+    summary: 'Форум по агроэкспорту: логистика, сертификация и каналы выхода в новые рынки.',
+  },
+  {
+    id: 'eurasia-logistics-forum-2026',
+    title: 'Eurasia Logistics Forum',
+    dateLabel: '6-7 июня 2026',
+    city: 'Алматы',
+    level: 'Международный',
+    status: 'Слоты B2B ограничены',
+    summary: 'Транспортные коридоры, портовые маршруты, страхование и цифровое сопровождение сделок.',
+  },
+  {
+    id: 'industry-invest-week-2026',
+    title: 'Industry & Invest Week',
+    dateLabel: '18 июня 2026',
+    city: 'Караганда',
+    level: 'Республиканский',
+    status: 'Формируется программа',
+    summary: 'Презентации инвестиционных проектов, меры господдержки и встречи с институтами развития.',
+  },
+]
+
 export function LandingPage() {
   return (
     <div className="relative overflow-hidden">
@@ -247,7 +290,7 @@ export function LandingPage() {
 
           <div className="grid items-stretch gap-6 lg:grid-cols-2">
             <GeneralPartnersCarousel partners={GENERAL_PARTNERS} />
-            <AnalyticsPreviewCard />
+            <AnnouncementsPreviewCard />
           </div>
         </Container>
       </section>
@@ -270,101 +313,85 @@ function TrustDot({ children }: { children: React.ReactNode }) {
   )
 }
 
-function AnalyticsPreviewCard() {
-  const featured = getFeaturedPost()
-  const popular = getPopularPosts(4)
+function AnnouncementsPreviewCard() {
+  const [featured, ...otherAnnouncements] = UPCOMING_ANNOUNCEMENTS
 
   return (
     <Card className="animate-text-reveal animate-text-reveal-delay-3 relative flex h-full flex-col overflow-hidden opacity-0 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.25)]">
       <div className="relative flex items-center justify-between border-b border-border bg-gradient-to-r from-brand-yellow-soft via-white to-brand-yellow-soft/80 px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="grid size-9 place-items-center rounded-xl bg-brand-blue/10 text-brand-blue">
-            <Newspaper className="size-4" />
+            <Megaphone className="size-4" />
           </div>
           <div>
-            <div className="text-sm font-semibold text-slate-900">Аналитика</div>
-            <div className="mt-0.5 text-[12px] text-slate-600">Разборы, кейсы и новости для экспортёров и байеров</div>
+            <div className="text-sm font-semibold text-slate-900">Объявления</div>
+            <div className="mt-0.5 text-[12px] text-slate-600">Новости о предстоящих форумах международного и республиканского уровня</div>
           </div>
         </div>
         <Link
-          to="/analytics"
+          to="/contacts"
           className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-border transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-white"
         >
-          Все материалы
+          Предложить форум
           <ArrowUpRight className="size-3.5" />
         </Link>
       </div>
 
       <CardContent className="flex flex-1 flex-col gap-4">
         {featured && (
-          <Link
-            to={`/analytics/${featured.slug}`}
-            className="group/feat block overflow-hidden rounded-2xl border border-border bg-white transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-20px_rgba(15,23,42,0.35)]"
-          >
-            <div className="relative aspect-[21/10] overflow-hidden bg-slate-100">
-              <img
-                src={featured.cover_image_url}
-                alt=""
-                className="h-full w-full object-cover transition-transform duration-500 group-hover/feat:scale-[1.03]"
-                onError={applyOfflineImageFallback}
-              />
-              <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent" />
-              <Badge tone="warning" className="absolute left-3 top-3 shadow-sm">
-                {getTypeLabel(featured.type)}
-              </Badge>
-              <div className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-slate-700 backdrop-blur-sm">
-                <Clock3 className="size-3" />
-                {featured.reading_time_min} мин
+          <article className="group/feat overflow-hidden rounded-2xl border border-border bg-white transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-20px_rgba(15,23,42,0.35)]">
+            <div className="bg-gradient-to-br from-brand-blue/10 via-white to-brand-yellow-soft/60 p-5">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-border">
+                  <CalendarDays className="size-3.5 text-brand-blue" />
+                  {featured.dateLabel}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-border">
+                  <MapPin className="size-3.5 text-brand-blue" />
+                  {featured.city}
+                </span>
+                <span className="inline-flex rounded-full bg-brand-blue/10 px-2.5 py-1 text-[11px] font-semibold text-brand-blue">
+                  {featured.level}
+                </span>
+              </div>
+              <h3 className="text-lg font-semibold leading-snug text-slate-900 sm:text-xl">{featured.title}</h3>
+              <p className="mt-1.5 text-sm text-slate-600">{featured.summary}</p>
+              <div className="mt-4 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                {featured.status}
               </div>
             </div>
-            <div className="p-4">
-              <h3 className="text-lg font-semibold leading-snug text-slate-900 sm:text-xl">
-                {featured.title}
-              </h3>
-              <p className="mt-1.5 line-clamp-2 text-sm text-slate-600">{featured.excerpt}</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-blue">
-                Читать
-                <ArrowUpRight className="size-3.5" />
-              </span>
-            </div>
-          </Link>
+          </article>
         )}
 
-        {popular.length > 0 && (
+        {otherAnnouncements.length > 0 && (
           <div className="flex flex-1 flex-col">
             <div className="mb-2 flex items-center justify-between">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Популярное</div>
-              <Link to="/analytics" className="text-[11px] font-medium text-slate-500 hover:text-slate-700">
-                смотреть все →
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Ближайшие анонсы</div>
+              <Link to="/contacts" className="text-[11px] font-medium text-slate-500 hover:text-slate-700">
+                отправить новость →
               </Link>
             </div>
             <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-white">
-              {popular.map((post, i) => (
-                <li key={post.id}>
-                  <Link
-                    to={`/analytics/${post.slug}`}
-                    className="group/row flex items-start gap-3 px-4 py-3 transition-colors duration-200 hover:bg-slate-50"
-                  >
+              {otherAnnouncements.map((announcement, i) => (
+                <li key={announcement.id}>
+                  <article className="group/row flex items-start gap-3 px-4 py-3 transition-colors duration-200 hover:bg-slate-50">
                     <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[11px] font-bold text-slate-600 group-hover/row:bg-brand-blue/10 group-hover/row:text-brand-blue">
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="line-clamp-2 text-sm font-medium leading-snug text-slate-900 group-hover/row:text-brand-blue">
-                        {post.title}
+                        {announcement.title}
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
-                        <span className="font-semibold text-slate-600">{getTypeLabel(post.type)}</span>
+                        <span className="font-semibold text-slate-600">{announcement.level}</span>
                         <span>·</span>
-                        <span>{post.category}</span>
+                        <span>{announcement.city}</span>
                         <span>·</span>
-                        <span className="inline-flex items-center gap-1">
-                          <Clock3 className="size-3" />
-                          {post.reading_time_min} мин
-                        </span>
+                        <span>{announcement.dateLabel}</span>
                       </div>
                     </div>
                     <ArrowUpRight className="mt-1 size-4 shrink-0 text-slate-300 transition-colors duration-200 group-hover/row:text-brand-blue" />
-                  </Link>
+                  </article>
                 </li>
               ))}
             </ul>
