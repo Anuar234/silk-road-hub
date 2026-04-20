@@ -4,7 +4,6 @@ import { useT } from '@features/i18n/i18n'
 import { LocaleSwitcher } from '@features/i18n/LocaleSwitcher'
 import { Container } from '@widgets/layout/Container'
 import { Button } from '@shared/ui/Button'
-import { ButtonLink } from '@shared/ui/ButtonLink'
 import { Logo } from '@shared/ui/Logo'
 import { cx } from '@shared/lib/cx'
 import { MobileNavDrawer } from '@widgets/layout/MobileNavDrawer'
@@ -13,15 +12,16 @@ export function PublicLayout() {
   const auth = useAuth()
   const location = useLocation()
   const t = useT()
-  const cabinetTarget = auth.role === 'admin' ? '/admin/dashboard' : '/app/home'
 
   const navItems = [
-    { to: '/', label: t('app.home', 'Главная') },
+    { to: '/', label: t('nav.home', 'Главное') },
     { to: '/catalog', label: t('nav.catalog', 'Каталог') },
+    { to: '/request-access', label: t('nav.rfq', 'RFQ') },
+    { to: '/investments', label: t('nav.investProjects', 'Инвест проекты') },
     { to: '/analytics', label: t('nav.analytics', 'Аналитика') },
     { to: '/about', label: t('nav.about', 'О платформе') },
-    { to: '/investments', label: t('nav.investments', 'Инвестпроекты') },
     { to: '/contacts', label: t('nav.contacts', 'Контакты') },
+    { to: '/login', label: t('nav.login', 'Вход') },
   ] as const
 
   return (
@@ -31,7 +31,7 @@ export function PublicLayout() {
           <div className="flex items-center gap-8">
             <NavLink to="/" className="flex items-center gap-3 rounded-xl motion-tap transition-opacity duration-[var(--duration-medium)] hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/30 focus-visible:ring-offset-2">
               <Logo size="md" />
-              <span className="text-sm font-semibold tracking-tight text-slate-900 hidden sm:inline">Silk Road Hub</span>
+              <span className="hidden text-sm font-semibold tracking-tight text-slate-900 sm:inline">Silk Road Hub</span>
             </NavLink>
 
             <nav className="hidden items-center gap-1 md:flex">
@@ -57,42 +57,12 @@ export function PublicLayout() {
             <MobileNavDrawer
               items={[...navItems]}
               onLogout={auth.isAuthenticated ? () => void auth.logout() : undefined}
-              footer={
-                auth.isAuthenticated ? (
-                  <ButtonLink to={cabinetTarget} variant="secondary" size="sm" className="w-full justify-center">
-                    Кабинет
-                  </ButtonLink>
-                ) : (
-                  <div className="grid gap-2">
-                    <ButtonLink to="/login" variant="ghost" size="sm" className="w-full justify-center">
-                      Войти
-                    </ButtonLink>
-                    <ButtonLink to="/request-access" variant="primary" size="sm" className="w-full justify-center">
-                      Запросить доступ
-                    </ButtonLink>
-                  </div>
-                )
-              }
             />
             {auth.isAuthenticated ? (
-              <>
-                <ButtonLink to={cabinetTarget} variant="secondary" size="sm" className="hidden sm:inline-flex">
-                  {t('nav.cabinet', 'Кабинет')}
-                </ButtonLink>
-                <Button variant="ghost" size="sm" onClick={() => void auth.logout()} className="hidden sm:inline-flex">
-                  {t('nav.logout', 'Выйти')}
-                </Button>
-              </>
-            ) : (
-              <>
-                <ButtonLink to="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">
-                  {t('nav.login', 'Войти')}
-                </ButtonLink>
-                <ButtonLink to="/request-access" variant="primary" size="sm">
-                  Запросить доступ
-                </ButtonLink>
-              </>
-            )}
+              <Button variant="ghost" size="sm" onClick={() => void auth.logout()} className="hidden sm:inline-flex">
+                {t('nav.logout', 'Выйти')}
+              </Button>
+            ) : null}
             <div className="hidden sm:block">
               <LocaleSwitcher variant="compact" />
             </div>
@@ -113,7 +83,10 @@ export function PublicLayout() {
             <div>
               <div className="text-sm font-semibold text-slate-900">Silk Road Hub</div>
               <div className="mt-1 text-sm text-slate-600">
-              Контакт: <a className="font-medium text-brand-blue transition-opacity duration-200 hover:underline hover:opacity-90" href="mailto:hello@silkroadhub.io">hello@silkroadhub.io</a>
+                Контакт:{' '}
+                <a className="font-medium text-brand-blue transition-opacity duration-200 hover:underline hover:opacity-90" href="mailto:hello@silkroadhub.io">
+                  hello@silkroadhub.io
+                </a>
               </div>
             </div>
           </div>
@@ -139,4 +112,3 @@ export function PublicLayout() {
     </div>
   )
 }
-
