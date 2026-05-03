@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Building2, MessageCircle, Plus, Trash2, X } from 'lucide-react'
 import { Container } from '@widgets/layout/Container'
-import { apiOpenThread } from '@shared/api/messagingApi'
+import { apiOpenThread, apiPostMessage } from '@shared/api/messagingApi'
 import { Badge } from '@shared/ui/Badge'
 import { Button } from '@shared/ui/Button'
 import { Card, CardContent, CardHeader } from '@shared/ui/Card'
@@ -45,8 +45,18 @@ export function AppRfqDetailPage() {
   const handleContactBuyer = async () => {
     if (!rfq) return
     setContactBusy(true)
+    setError(null)
     try {
       const thread = await apiOpenThread({ counterpartId: rfq.buyerId })
+      // Seed the conversation with explicit RFQ context so the buyer
+      // immediately sees who is writing and why. Failure to post the intro
+      // shouldn't block navigation — the thread already exists.
+      const intro = buildSellerIntroMessage(rfq.title, rfq.id)
+      try {
+        await apiPostMessage(thread.id, intro)
+      } catch {
+        // ignored — buyer will just see an empty thread, seller can type
+      }
       navigate(`/app/messages/${thread.id}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Не удалось открыть переписку.')
@@ -451,4 +461,13 @@ function AdminControls({ rfq, onChange }: { rfq: Rfq; onChange: () => void }) {
       </CardContent>
     </Card>
   )
+}
+
+function buildSellerIntroMessage(title: string, rfqId: string): string {
+  const shortId = rfqId.slice(0, 8)
+  return [
+    `Здравствуйте! Пишу по вашему запросу #${shortId} «${title}».`,
+    'Готов обсудить условия поставки: объём, цену, сроки, Incoterms, упаковку и сертификацию.',
+    'Расскажите, что для вас критично, и я подготовлю коммерческое предложение.',
+  ].join('\n\n')
 }

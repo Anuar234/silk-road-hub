@@ -35,7 +35,20 @@ async function csrfHeaders(): Promise<Record<string, string>> {
 
 async function readApiError(res: Response): Promise<string | null> {
   const payload = (await res.json().catch(() => ({}))) as { message?: string; error?: string }
-  return payload.error ?? payload.message ?? null
+  const raw = payload.error ?? payload.message ?? null
+  if (!raw) return null
+  // Gin's validator returns messages like:
+  //   "Key: 'CreateThreadInput.CounterpartID' Error:Field validation for 'CounterpartID' failed on the 'uuid' tag"
+  // We surface a short readable hint instead of the raw struct path.
+  if (raw.startsWith("Key: '") && raw.includes('failed on the')) {
+    const match = raw.match(/failed on the '([^']+)' tag/)
+    const tag = match?.[1] ?? 'validation'
+    if (tag === 'required') return 'Заполните обязательные поля.'
+    if (tag === 'uuid') return 'Получен некорректный идентификатор.'
+    if (tag === 'min' || tag === 'max') return 'Длина значения вне допустимого диапазона.'
+    return 'Сервер отклонил данные (проверка: ' + tag + ').'
+  }
+  return raw
 }
 
 export async function apiListThreads(): Promise<MessageThread[]> {
@@ -54,11 +67,15 @@ export async function apiGetThread(id: string): Promise<MessageThread> {
 
 export async function apiOpenThread(args: { counterpartId: string; productId?: string }): Promise<MessageThread> {
   const headers = await csrfHeaders()
+  // Strip an empty productId before sending — backend validates `omitempty,uuid`,
+  // and an empty string slips past `omitempty` and trips the uuid check.
+  const body: { counterpartId: string; productId?: string } = { counterpartId: args.counterpartId }
+  if (args.productId && args.productId.length > 0) body.productId = args.productId
   const res = await fetch('/api/messaging/threads', {
     method: 'POST',
     credentials: 'include',
     headers,
-    body: JSON.stringify(args),
+    body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error((await readApiError(res)) ?? 'Не удалось открыть переписку.')
   const data = (await res.json()) as { ok: true; data: MessageThread }
