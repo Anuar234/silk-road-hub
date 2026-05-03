@@ -13,13 +13,11 @@ export function PublicLayout() {
   const location = useLocation()
   const t = useT()
 
-  // Authenticated visitors get a direct shortcut to their cabinet RFQ list;
-  // anonymous visitors land on login (which preserves the destination).
-  const rfqHref = auth.isAuthenticated ? '/app/rfq' : '/login'
+  // RFQ lives in the cabinet sidebar (for authed buyers/sellers) and on the
+  // catalog page as a contextual banner — no need for a duplicate top-nav tab.
   const navItems = [
     { to: '/', label: t('nav.home', 'Главное') },
     { to: '/catalog', label: t('nav.catalog', 'Каталог') },
-    { to: rfqHref, label: t('nav.rfq', 'RFQ') },
     { to: '/investments', label: t('nav.investProjects', 'Инвест проекты') },
     { to: '/analytics', label: t('nav.analytics', 'Аналитика') },
     { to: '/about', label: t('nav.about', 'О платформе') },
