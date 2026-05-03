@@ -1,5 +1,6 @@
-import { Building2, ChevronRight, Globe, Grid3X3, Search } from 'lucide-react'
+import { Building2, ChevronRight, ClipboardList, Globe, Grid3X3, Search } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
+import { useAuth } from '@features/auth/auth'
 import { Container } from '@widgets/layout/Container'
 import { Badge } from '@shared/ui/Badge'
 import { ButtonLink } from '@shared/ui/ButtonLink'
@@ -16,6 +17,11 @@ import { getTrustBadgeLabel } from '@features/platform/trustBadges'
 
 export function CatalogPage() {
   const location = useLocation()
+  const auth = useAuth()
+  // Unauthenticated visitors get bounced to /login; authed buyers go straight
+  // to the RFQ create form. Sellers see the banner too — they may want to
+  // know that this option exists for their buyers.
+  const rfqCtaHref = auth.isAuthenticated ? '/app/rfq/new' : '/login'
   const {
     rawFilters,
     filteredProducts,
@@ -155,6 +161,25 @@ export function CatalogPage() {
           )}
         </nav>
       )}
+
+      {/* Permanent RFQ CTA — when the catalog doesn't have what the buyer
+          needs, a one-click path to post a Request for Quote. */}
+      <div className="mt-6 flex flex-col items-start justify-between gap-3 rounded-2xl border border-brand-blue/15 bg-gradient-to-r from-brand-yellow-soft via-white to-brand-blue/5 p-4 sm:flex-row sm:items-center">
+        <div className="flex items-start gap-3">
+          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-blue/10 text-brand-blue">
+            <ClipboardList className="size-5" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-slate-900">Не нашли нужный товар?</div>
+            <div className="mt-0.5 text-xs text-slate-600">
+              Опишите потребность — администратор подберёт поставщиков и свяжет вас в защищённой переписке.
+            </div>
+          </div>
+        </div>
+        <ButtonLink to={rfqCtaHref} variant="primary" size="sm" className="shrink-0">
+          Создать запрос
+        </ButtonLink>
+      </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[280px_1fr]">
         <aside className="hidden shrink-0 lg:block">

@@ -1,4 +1,4 @@
-import { BarChart3, Bell, Building2, Home, Mail, Package, Search, Settings, LogOut, ShieldCheck, ShoppingBag, ShieldAlert } from 'lucide-react'
+import { BarChart3, Bell, Building2, ClipboardList, Home, Mail, Package, Search, Settings, LogOut, ShieldCheck, ShoppingBag, ShieldAlert } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth, type Role } from '@features/auth/auth'
@@ -17,6 +17,7 @@ function buildBuyerSideItems(t: (key: string, fallback?: string) => string): Sid
   return [
     { to: '/app/home', label: t('app.home', 'Главная'), icon: Home },
     { to: '/app/catalog', label: t('app.catalog', 'Каталог'), icon: Package },
+    { to: '/app/rfq', label: t('app.rfq', 'Запросы (RFQ)'), icon: ClipboardList },
     { to: '/app/messages', label: t('app.messages', 'Сообщения'), icon: Mail },
     { to: '/app/deals', label: t('app.deals', 'Сделки'), icon: ShoppingBag },
     { to: '/app/settings', label: t('app.settings', 'Настройки'), icon: Settings },
@@ -28,6 +29,7 @@ function buildSellerSideItems(t: (key: string, fallback?: string) => string): Si
     { to: '/app/home', label: t('app.home', 'Главная'), icon: Home },
     { to: '/app/catalog', label: t('app.catalog', 'Каталог'), icon: Package },
     { to: '/app/products', label: t('app.products', 'Товары'), icon: Package },
+    { to: '/app/rfq', label: t('app.rfq', 'Запросы (RFQ)'), icon: ClipboardList },
     { to: '/app/messages', label: t('app.messages', 'Сообщения'), icon: Mail },
     { to: '/app/deals', label: t('app.deals', 'Сделки'), icon: ShoppingBag },
     { to: '/app/settings', label: t('app.settings', 'Настройки'), icon: Settings },

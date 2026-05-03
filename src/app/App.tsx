@@ -45,6 +45,9 @@ const AppSettingsPage = lazy(async () => ({ default: (await import('@pages/app/A
 const AppInvestmentRequestsPage = lazy(async () => ({ default: (await import('@pages/app/AppInvestmentRequestsPage')).AppInvestmentRequestsPage }))
 const AppInvestmentsListPage = lazy(async () => ({ default: (await import('@pages/app/AppInvestmentsListPage')).AppInvestmentsListPage }))
 const AppInvestmentUpsertPage = lazy(async () => ({ default: (await import('@pages/app/AppInvestmentUpsertPage')).AppInvestmentUpsertPage }))
+const AppRfqListPage = lazy(async () => ({ default: (await import('@pages/app/AppRfqListPage')).AppRfqListPage }))
+const AppRfqUpsertPage = lazy(async () => ({ default: (await import('@pages/app/AppRfqUpsertPage')).AppRfqUpsertPage }))
+const AppRfqDetailPage = lazy(async () => ({ default: (await import('@pages/app/AppRfqDetailPage')).AppRfqDetailPage }))
 const AppInstitutionalVerificationPage = lazy(async () => ({ default: (await import('@pages/app/AppInstitutionalVerificationPage')).AppInstitutionalVerificationPage }))
 const AppInstitutionalDealsPage = lazy(async () => ({ default: (await import('@pages/app/AppInstitutionalDealsPage')).AppInstitutionalDealsPage }))
 const AppInstitutionalInvestmentsPage = lazy(async () => ({ default: (await import('@pages/app/AppInstitutionalInvestmentsPage')).AppInstitutionalInvestmentsPage }))
@@ -113,7 +116,12 @@ export default function App() {
                   <Route path=":id" element={<AppProductsDetailPage />} />
                   <Route path=":id/edit" element={<AppProductsUpsertPage mode="edit" />} />
                 </Route>
-                <Route path="rfq" element={<Navigate to="/app/deals" replace />} />
+                <Route path="rfq">
+                  <Route index element={<AppRfqListPage />} />
+                  <Route path="new" element={<AppRfqUpsertPage mode="create" />} />
+                  <Route path=":id" element={<AppRfqDetailPage />} />
+                  <Route path=":id/edit" element={<AppRfqUpsertPage mode="edit" />} />
+                </Route>
                 <Route path="messages" element={<AppMessagesPage />} />
                 <Route path="messages/:threadId" element={<AppMessagesPage />} />
                 <Route path="deals" element={<AppDealsPage />} />
@@ -157,6 +165,13 @@ export default function App() {
                 <Route path="news" element={<AdminNewsPage />} />
                 <Route path="news/new" element={<AdminNewsEditorPage mode="create" />} />
                 <Route path="news/:id/edit" element={<AdminNewsEditorPage mode="edit" />} />
+                {/* RFQ — admin views the buyer/seller RFQ pages mounted here
+                    so they stay inside AdminLayout. Auth-aware basePath inside
+                    the components handles the routing. */}
+                <Route path="rfq">
+                  <Route index element={<AppRfqListPage />} />
+                  <Route path=":id" element={<AppRfqDetailPage />} />
+                </Route>
                 {/* Legacy redirect */}
                 <Route path="purchase-intents" element={<Navigate to="/admin/deals" replace />} />
                 <Route path="purchase-intents/:id" element={<Navigate to="/admin/deals" replace />} />

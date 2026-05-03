@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BarChart3, Building2, FileText, FolderOpen, History, LayoutDashboard, LogOut, MessagesSquare, Newspaper, PieChart, Settings, Shield, Users, Package } from 'lucide-react'
+import { BarChart3, Building2, ClipboardList, FileText, FolderOpen, History, LayoutDashboard, LogOut, MessagesSquare, Newspaper, PieChart, Settings, Shield, Users, Package } from 'lucide-react'
 import { Logo } from '@shared/ui/Logo'
 import { useAuth } from '@features/auth/auth'
 import { useT } from '@features/i18n/i18n'
@@ -15,6 +15,7 @@ export function AdminLayout() {
   const sideItems = [
     { to: '/admin/dashboard', label: t('admin.dashboard', 'Дашборд'), icon: LayoutDashboard },
     { to: '/admin/deals', label: t('admin.deals', 'Сделки'), icon: FolderOpen },
+    { to: '/admin/rfq', label: t('admin.rfq', 'Запросы (RFQ)'), icon: ClipboardList },
     { to: '/admin/documents', label: t('admin.documents', 'Документы'), icon: FileText },
     { to: '/admin/messages', label: t('admin.messages', 'Сообщения'), icon: MessagesSquare },
     { to: '/admin/users', label: t('admin.users', 'Пользователи'), icon: Users },

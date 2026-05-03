@@ -32,6 +32,7 @@ import (
 	"github.com/silkroadhub/backend/internal/module/news"
 	"github.com/silkroadhub/backend/internal/module/product"
 	"github.com/silkroadhub/backend/internal/module/reference"
+	"github.com/silkroadhub/backend/internal/module/rfq"
 	"github.com/silkroadhub/backend/internal/module/shipment"
 	"github.com/silkroadhub/backend/internal/module/user"
 	"github.com/silkroadhub/backend/internal/session"
@@ -157,6 +158,24 @@ func main() {
 	// repo avoids creating a parallel users-table accessor inside messaging.
 	messagingSvc := messaging.NewService(messagingRepo, authRepo)
 	messaging.RegisterRoutes(api, messagingSvc, sessStore)
+
+	// RFQ uses messaging to spawn buyer↔seller threads when admin matches.
+	// Closures wrap messagingSvc so the rfq package doesn't import messaging.
+	rfqRepo := rfq.NewRepository(pool)
+	rfqSvc := rfq.NewService(rfqRepo, rfq.MessagingHooks{
+		FindOrCreateThread: func(ctx context.Context, buyerID, sellerID string) (string, error) {
+			t, err := messagingSvc.FindOrCreateThread(ctx, buyerID, "buyer", sellerID, nil)
+			if err != nil || t == nil {
+				return "", err
+			}
+			return t.ID, nil
+		},
+		PostSystemMessage: func(ctx context.Context, threadID, body string) error {
+			_, err := messagingSvc.AddSystemMessage(ctx, threadID, body)
+			return err
+		},
+	})
+	rfq.RegisterRoutes(api, rfqSvc, sessStore)
 
 	// --- Server ---
 	addr := fmt.Sprintf(":%d", cfg.Port)

@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS rfq_matches;
+DROP TABLE IF EXISTS rfqs;
+DROP TYPE IF EXISTS rfq_status;
