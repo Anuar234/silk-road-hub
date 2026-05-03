@@ -16,6 +16,20 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
+// Status values mirror the product_status enum in PostgreSQL. ТЗ §5.2 surfaces
+// four of them (Черновик/Опубликовано/В переговорах/Архивировано); 'moderation'
+// and 'rejected' are internal transitions used by the admin moderation flow.
+var validStatuses = map[string]bool{
+	"draft":          true,
+	"moderation":     true,
+	"published":      true,
+	"rejected":       true,
+	"in_negotiation": true,
+	"archived":       true,
+}
+
+func IsValidStatus(s string) bool { return validStatuses[s] }
+
 func (s *Service) Create(ctx context.Context, in *CreateInput, sellerID string) (*Product, error) {
 	p := &Product{
 		ID:               uuid.NewString(),
@@ -101,6 +115,55 @@ func (s *Service) SubmitForModeration(ctx context.Context, id, userID string) er
 	return s.repo.Update(ctx, id, map[string]any{"status": "moderation"})
 }
 
+// Archive moves a product to 'archived'. Sellers may archive their own products
+// from any non-archived state; admins may archive any product. ТЗ §5.2 requires
+// archiving with the option to restore.
+func (s *Service) Archive(ctx context.Context, id, role, userID string) error {
+	p, err := s.repo.GetByID(ctx, id)
+	if err != nil || p == nil {
+		return fmt.Errorf("product not found")
+	}
+	if role != "admin" && p.SellerID != userID {
+		return fmt.Errorf("forbidden")
+	}
+	if p.Status == "archived" {
+		return fmt.Errorf("product already archived")
+	}
+	return s.repo.Update(ctx, id, map[string]any{"status": "archived"})
+}
+
+// Unarchive restores an archived product back to 'draft' so the seller can
+// review it before resubmitting for moderation.
+func (s *Service) Unarchive(ctx context.Context, id, role, userID string) error {
+	p, err := s.repo.GetByID(ctx, id)
+	if err != nil || p == nil {
+		return fmt.Errorf("product not found")
+	}
+	if role != "admin" && p.SellerID != userID {
+		return fmt.Errorf("forbidden")
+	}
+	if p.Status != "archived" {
+		return fmt.Errorf("product is not archived")
+	}
+	return s.repo.Update(ctx, id, map[string]any{"status": "draft"})
+}
+
+// MarkInNegotiation flags a product as currently being negotiated. Intended to
+// be invoked by the deal module when a deal opens against the product.
+func (s *Service) MarkInNegotiation(ctx context.Context, id string) error {
+	p, err := s.repo.GetByID(ctx, id)
+	if err != nil || p == nil {
+		return fmt.Errorf("product not found")
+	}
+	if p.Status == "archived" {
+		return fmt.Errorf("cannot negotiate on archived product")
+	}
+	if p.Status == "in_negotiation" {
+		return nil
+	}
+	return s.repo.Update(ctx, id, map[string]any{"status": "in_negotiation"})
+}
+
 func buildUpdateSets(in *UpdateInput, role string) map[string]any {
 	sets := make(map[string]any)
 	if in.Name != nil {
@@ -155,9 +218,10 @@ func buildUpdateSets(in *UpdateInput, role string) map[string]any {
 	if in.PrivateLabel != nil {
 		sets["private_label"] = *in.PrivateLabel
 	}
-	// Only admin can change status and moderation comment
+	// Only admin can change status and moderation comment. Status is validated
+	// against the product_status enum to keep invalid values out of the DB.
 	if role == "admin" {
-		if in.Status != nil {
+		if in.Status != nil && validStatuses[*in.Status] {
 			sets["status"] = *in.Status
 		}
 		if in.ModerationComment != nil {

@@ -58,7 +58,10 @@ export function RegisterPage() {
       })
       // After registration the session cookie is set, reload auth
       await auth.login({ email, password })
-      if (role === 'seller' || role === 'investor') {
+      // Sellers still land on the doc-upload screen because their primary next
+      // step is corporate verification. Investors get the cabinet home — the
+      // CTA "Разместить проект" lives there now (ТЗ §4.3 / fix #5).
+      if (role === 'seller') {
         navigate('/app/verification', { replace: true })
       } else {
         navigate('/app/home', { replace: true })
@@ -126,8 +129,14 @@ export function RegisterPage() {
         <Card>
           <CardHeader title="Данные аккаунта" />
           <CardContent className="grid gap-3">
-            <Field label="Имя / Название *" htmlFor="reg-name">
-              <Input id="reg-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="ТОО «Company» или ФИО" />
+            <Field label="ФИО представителя *" htmlFor="reg-name">
+              <Input
+                id="reg-name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Иванов Иван"
+                autoComplete="name"
+              />
             </Field>
 
             <Field label="Email *" htmlFor="reg-email">

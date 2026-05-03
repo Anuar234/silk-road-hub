@@ -6,6 +6,8 @@ import { LocaleProvider } from '@features/i18n/i18n'
 import { RequireAuth } from '@features/auth/requireAuth'
 import { RequireAppUser } from '@features/auth/requireAppUser'
 import { RequireSeller } from '@features/auth/requireSeller'
+import { RequireInvestor } from '@features/auth/requireInvestor'
+import { RequireInstitutional } from '@features/auth/requireInstitutional'
 import { RequireAdmin } from '@features/auth/requireAdmin'
 
 const PublicLayout = lazy(async () => ({ default: (await import('@widgets/layout/PublicLayout')).PublicLayout }))
@@ -25,6 +27,7 @@ const ContactsPage = lazy(async () => ({ default: (await import('@pages/public/C
 const LoginPage = lazy(async () => ({ default: (await import('@pages/public/LoginPage')).LoginPage }))
 const RegisterPage = lazy(async () => ({ default: (await import('@pages/public/RegisterPage')).RegisterPage }))
 const RequestAccessPage = lazy(async () => ({ default: (await import('@pages/public/RequestAccessPage')).RequestAccessPage }))
+const EmailVerifyPage = lazy(async () => ({ default: (await import('@pages/public/EmailVerifyPage')).EmailVerifyPage }))
 const NotFoundPage = lazy(async () => ({ default: (await import('@pages/public/NotFoundPage')).NotFoundPage }))
 
 const VerificationPage = lazy(async () => ({ default: (await import('@pages/public/VerificationPage')).VerificationPage }))
@@ -40,6 +43,12 @@ const AppProductsListPage = lazy(async () => ({ default: (await import('@pages/a
 const AppProductsUpsertPage = lazy(async () => ({ default: (await import('@pages/app/AppProductsUpsertPage')).AppProductsUpsertPage }))
 const AppSettingsPage = lazy(async () => ({ default: (await import('@pages/app/AppSettingsPage')).AppSettingsPage }))
 const AppInvestmentRequestsPage = lazy(async () => ({ default: (await import('@pages/app/AppInvestmentRequestsPage')).AppInvestmentRequestsPage }))
+const AppInvestmentsListPage = lazy(async () => ({ default: (await import('@pages/app/AppInvestmentsListPage')).AppInvestmentsListPage }))
+const AppInvestmentUpsertPage = lazy(async () => ({ default: (await import('@pages/app/AppInvestmentUpsertPage')).AppInvestmentUpsertPage }))
+const AppInstitutionalVerificationPage = lazy(async () => ({ default: (await import('@pages/app/AppInstitutionalVerificationPage')).AppInstitutionalVerificationPage }))
+const AppInstitutionalDealsPage = lazy(async () => ({ default: (await import('@pages/app/AppInstitutionalDealsPage')).AppInstitutionalDealsPage }))
+const AppInstitutionalInvestmentsPage = lazy(async () => ({ default: (await import('@pages/app/AppInstitutionalInvestmentsPage')).AppInstitutionalInvestmentsPage }))
+const AppInstitutionalReportsPage = lazy(async () => ({ default: (await import('@pages/app/AppInstitutionalReportsPage')).AppInstitutionalReportsPage }))
 
 const AdminDashboardPage = lazy(async () => ({ default: (await import('@pages/admin/AdminDashboardPage')).AdminDashboardPage }))
 const AdminDealsPage = lazy(async () => ({ default: (await import('@pages/admin/AdminDealsPage')).AdminDealsPage }))
@@ -88,6 +97,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/request-access" element={<RequestAccessPage />} />
+            <Route path="/verify-email" element={<EmailVerifyPage />} />
           </Route>
 
           <Route element={<RequireAuth />}>
@@ -111,6 +121,17 @@ export default function App() {
                 <Route path="settings" element={<AppSettingsPage />} />
                 <Route path="verification" element={<VerificationPage />} />
                 <Route path="investment-requests" element={<AppInvestmentRequestsPage />} />
+                <Route path="investments" element={<RequireInvestor />}>
+                  <Route index element={<AppInvestmentsListPage />} />
+                  <Route path="new" element={<AppInvestmentUpsertPage mode="create" />} />
+                  <Route path=":id/edit" element={<AppInvestmentUpsertPage mode="edit" />} />
+                </Route>
+                <Route path="institutional" element={<RequireInstitutional />}>
+                  <Route path="verification" element={<AppInstitutionalVerificationPage />} />
+                  <Route path="deals" element={<AppInstitutionalDealsPage />} />
+                  <Route path="investments" element={<AppInstitutionalInvestmentsPage />} />
+                  <Route path="reports" element={<AppInstitutionalReportsPage />} />
+                </Route>
               </Route>
             </Route>
 

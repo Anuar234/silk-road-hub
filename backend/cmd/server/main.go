@@ -24,9 +24,11 @@ import (
 	"github.com/silkroadhub/backend/internal/module/auth"
 	"github.com/silkroadhub/backend/internal/module/contract"
 	"github.com/silkroadhub/backend/internal/module/deal"
+	"github.com/silkroadhub/backend/internal/module/dealintent"
 	"github.com/silkroadhub/backend/internal/module/file"
 	"github.com/silkroadhub/backend/internal/module/investment"
 	"github.com/silkroadhub/backend/internal/module/investmentrequest"
+	"github.com/silkroadhub/backend/internal/module/messaging"
 	"github.com/silkroadhub/backend/internal/module/news"
 	"github.com/silkroadhub/backend/internal/module/product"
 	"github.com/silkroadhub/backend/internal/module/reference"
@@ -135,6 +137,10 @@ func main() {
 	dealSvc := deal.NewService(dealRepo)
 	deal.RegisterRoutes(api, dealSvc, sessStore)
 
+	intentRepo := dealintent.NewRepository(pool)
+	intentSvc := dealintent.NewService(intentRepo)
+	dealintent.RegisterRoutes(api, intentSvc, sessStore)
+
 	analytics.RegisterRoutes(api, pool, sessStore)
 	audit.RegisterRoutes(api, auditSvc, sessStore)
 
@@ -145,6 +151,12 @@ func main() {
 	newsRepo := news.NewRepository(pool)
 	newsSvc := news.NewService(newsRepo)
 	news.RegisterRoutes(api, newsSvc, sessStore)
+
+	messagingRepo := messaging.NewRepository(pool)
+	// authRepo satisfies the userLookup interface (GetRole). Sharing the auth
+	// repo avoids creating a parallel users-table accessor inside messaging.
+	messagingSvc := messaging.NewService(messagingRepo, authRepo)
+	messaging.RegisterRoutes(api, messagingSvc, sessStore)
 
 	// --- Server ---
 	addr := fmt.Sprintf(":%d", cfg.Port)

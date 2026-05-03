@@ -41,6 +41,15 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
+	// Email verification is fire-and-forget: the user account is usable
+	// without it (the existing 'verified' flag is gated by admin KYC), but
+	// the token issuance must not silently fail.
+	if _, tokenErr := h.svc.IssueEmailVerificationToken(c.Request.Context(), u.ID, u.Email); tokenErr != nil {
+		// Do not fail the request — log and move on. Resend endpoint can
+		// recover from this if needed.
+		c.Error(tokenErr) //nolint:errcheck
+	}
+
 	sid, err := h.createSession(c, u)
 	if err != nil {
 		apierror.Internal(c, "session error")
@@ -49,6 +58,36 @@ func (h *Handler) Register(c *gin.Context) {
 	h.setSessionCookie(c, sid)
 
 	c.JSON(http.StatusCreated, gin.H{"ok": true, "data": u.ToPayload(nil)})
+}
+
+func (h *Handler) VerifyEmail(c *gin.Context) {
+	var in struct {
+		Token string `json:"token" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&in); err != nil {
+		apierror.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := h.svc.VerifyEmailToken(c.Request.Context(), in.Token); err != nil {
+		apierror.BadRequest(c, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+func (h *Handler) ResendVerification(c *gin.Context) {
+	sess := middleware.GetSession(c)
+	if sess == nil {
+		apierror.Unauthorized(c, "")
+		return
+	}
+
+	if _, err := h.svc.ResendEmailVerification(c.Request.Context(), sess.UserID, sess.Email); err != nil {
+		apierror.Internal(c, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 func (h *Handler) Login(c *gin.Context) {

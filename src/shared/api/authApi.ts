@@ -135,3 +135,33 @@ export async function apiLogout(): Promise<void> {
     throw new Error('Failed to logout.')
   }
 }
+
+export async function apiVerifyEmail(token: string): Promise<void> {
+  const csrfToken = await apiGetCsrfToken()
+  const res = await fetch('/api/auth/verify-email', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken,
+    },
+    body: JSON.stringify({ token }),
+  })
+  if (!res.ok) {
+    throw new Error((await readApiError(res)) ?? 'Не удалось подтвердить email. Запросите новую ссылку.')
+  }
+}
+
+export async function apiResendVerification(): Promise<void> {
+  const csrfToken = await apiGetCsrfToken()
+  const res = await fetch('/api/auth/resend-verification', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'X-CSRF-Token': csrfToken,
+    },
+  })
+  if (!res.ok) {
+    throw new Error((await readApiError(res)) ?? 'Не удалось отправить ссылку повторно.')
+  }
+}

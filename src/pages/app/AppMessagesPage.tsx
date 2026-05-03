@@ -1,34 +1,44 @@
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { buildFlashState } from '@shared/api/navigationState'
 import { FileText, Send, ShieldCheck, ShoppingBag } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { uploadDealFile } from '@shared/api/fileApi'
+import { apiResendVerification } from '@shared/api/authApi'
+import {
+  apiListMessages,
+  apiListThreads,
+  apiMarkThreadRead,
+  apiOpenThread,
+  apiPostMessage,
+  type MessageRow,
+  type MessageThread,
+} from '@shared/api/messagingApi'
 import { Button } from '@shared/ui/Button'
 import { Badge } from '@shared/ui/Badge'
 import { Input } from '@shared/ui/Input'
 import { Textarea } from '@shared/ui/Textarea'
 import { useAuth } from '@features/auth/auth'
 import { cx } from '@shared/lib/cx'
-import {
-  findOrCreateThread,
-  getThreadMessages,
-  getThreadProduct,
-  addMessage,
-  addSystemMessage,
-  getParticipantId,
-  getSellerIdFromAuth,
-} from '@features/messaging/messagingData'
-import { sellers } from '@mocks/mockData'
 import { DealModal } from '@widgets/deal/DealModal'
-import { addDealDocument, getDealById, updateDealFields, updateDealStatus, DEAL_STATUS_LABELS, DEAL_STATUS_TONE } from '@features/deals/dealData'
+import {
+  addDealDocument,
+  DEAL_STATUS_LABELS,
+  DEAL_STATUS_TONE,
+  getDealByThreadId,
+  updateDealFields,
+  updateDealStatus,
+} from '@features/deals/dealData'
 import type { DocType } from '@features/deals/dealData'
-import { getThreadsForAuth } from '@features/platform/platformSelectors'
+import { products } from '@mocks/mockData'
 import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 
+const MESSAGE_POLL_INTERVAL_MS = 8000
+
 /**
- * Central communication surface for buyer, seller, and admin-linked deal flows.
- * This page is one of the highest-risk migration points because it joins
- * routing, auth gates, messages, deals, and document uploads in one screen.
+ * Buyer↔seller messaging surface backed by the real /api/messaging endpoints.
+ * Deal-related actions still operate against the in-memory deal store; that
+ * lookup is by threadId so the UI panel for an open deal works regardless of
+ * whether `related_deal_id` has been populated server-side.
  */
 export function AppMessagesPage() {
   const { threadId } = useParams()
@@ -39,13 +49,19 @@ export function AppMessagesPage() {
   const navigate = useNavigate()
   const version = usePlatformDataVersion()
 
-  const myId = useMemo(() => getParticipantId(auth), [auth])
-  const mySellerId = useMemo(() => getSellerIdFromAuth(auth), [auth])
   const isBuyerRole = auth.role === 'buyer'
   const canMessage = isBuyerRole ? auth.emailVerified : true
 
+  const [threads, setThreads] = useState<MessageThread[]>([])
+  const [threadsError, setThreadsError] = useState<string | null>(null)
+  const [messages, setMessages] = useState<MessageRow[]>([])
+  const [messagesError, setMessagesError] = useState<string | null>(null)
+  const [openError, setOpenError] = useState<string | null>(null)
+
   const [inputText, setInputText] = useState('')
-  const [resendSent, setResendSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [resendState, setResendState] = useState<'idle' | 'pending' | 'sent' | 'error'>('idle')
+  const [resendError, setResendError] = useState<string | null>(null)
   const [showDealModal, setShowDealModal] = useState(false)
   const [adminComment, setAdminComment] = useState('')
   const [docName, setDocName] = useState('')
@@ -55,33 +71,118 @@ export function AppMessagesPage() {
   const [fileInputKey, setFileInputKey] = useState(0)
   const [isUploadingDoc, setIsUploadingDoc] = useState(false)
   const [docError, setDocError] = useState<string | null>(null)
+
   const modalShellRef = useRef<HTMLDivElement | null>(null)
   const modalTriggerRef = useRef<HTMLElement | null>(null)
 
-  const availableThreads = useMemo(() => getThreadsForAuth(auth), [auth, version])
-  const queryThread = useMemo(() => {
-    // Opening `/app/messages?seller=...&product=...` is the compatibility path
-    // used by catalog/detail pages to bootstrap a conversation without breaking
-    // existing links or CTA behavior.
-    if (threadId || !sellerIdFromQuery) return null
-    return findOrCreateThread(myId, sellerIdFromQuery, productIdFromQuery)
-  }, [threadId, sellerIdFromQuery, productIdFromQuery, myId])
-
-  useEffect(() => {
-    if (!threadId && queryThread) {
-      navigate(`/app/messages/${queryThread.id}`, { replace: true })
+  const refreshThreads = useCallback(async () => {
+    try {
+      const list = await apiListThreads()
+      setThreads(list)
+      setThreadsError(null)
+    } catch (e) {
+      setThreadsError(e instanceof Error ? e.message : 'Не удалось загрузить переписки.')
     }
-  }, [threadId, queryThread, navigate])
+  }, [])
 
+  // Initial threads fetch + after every send.
+  useEffect(() => {
+    void refreshThreads()
+  }, [refreshThreads])
+
+  // Bootstrap from `?seller=X&product=Y`: open or reuse a thread, then redirect
+  // to /app/messages/:id so the URL is shareable and reload-stable.
+  useEffect(() => {
+    if (threadId || !sellerIdFromQuery) return
+    let cancelled = false
+    void apiOpenThread({
+      counterpartId: sellerIdFromQuery,
+      productId: productIdFromQuery ?? undefined,
+    })
+      .then((t) => {
+        if (cancelled) return
+        navigate(`/app/messages/${t.id}`, { replace: true })
+        // Refresh inbox so the new thread appears in the sidebar.
+        void refreshThreads()
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return
+        setOpenError(e instanceof Error ? e.message : 'Не удалось открыть переписку.')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [threadId, sellerIdFromQuery, productIdFromQuery, navigate, refreshThreads])
+
+  // Load messages when thread changes; poll every 8s while it's open so new
+  // messages from the counterpart appear without a full page refresh. Pilot:
+  // polling is good enough; WebSockets are an Этап 2 task.
+  useEffect(() => {
+    if (!threadId) {
+      setMessages([])
+      setMessagesError(null)
+      return
+    }
+    let cancelled = false
+
+    const load = async (markRead: boolean) => {
+      try {
+        const list = await apiListMessages(threadId)
+        if (cancelled) return
+        setMessages(list)
+        setMessagesError(null)
+        if (markRead) {
+          // Fire-and-forget: read receipt failures shouldn't break the chat.
+          void apiMarkThreadRead(threadId).then(() => {
+            void refreshThreads()
+          }).catch(() => {})
+        }
+      } catch (e) {
+        if (cancelled) return
+        setMessagesError(e instanceof Error ? e.message : 'Не удалось загрузить сообщения.')
+      }
+    }
+    void load(true)
+    const handle = window.setInterval(() => void load(false), MESSAGE_POLL_INTERVAL_MS)
+    return () => {
+      cancelled = true
+      window.clearInterval(handle)
+    }
+  }, [threadId, refreshThreads])
+
+  const currentThread = useMemo(
+    () => (threadId ? threads.find((t) => t.id === threadId) ?? null : null),
+    [threadId, threads],
+  )
+
+  const amBuyerInThread = currentThread?.buyerId === auth.userId
+  const amSellerInThread = currentThread?.sellerId === auth.userId
+
+  // Deal lookup is local: messaging API has no awareness of the still-mock deal
+  // store. usePlatformDataVersion ticks when deals mutate (via storeEvents).
+  void version
+  const relatedDeal = currentThread ? getDealByThreadId(currentThread.id) ?? null : null
+  const threadProduct = useMemo(() => {
+    if (!currentThread?.productId) return null
+    // Prefer mock catalog product (has slug + media); fallback to whatever the
+    // server returned. Real backend products will be present here once the
+    // catalog is fully DB-backed.
+    return products.find((p) => p.id === currentThread.productId) ?? null
+  }, [currentThread])
+
+  const adminJoined = useMemo(() => {
+    if (!relatedDeal) return false
+    return messages.some((m) => m.senderRole === 'admin') || Boolean(relatedDeal.assignedManager)
+  }, [messages, relatedDeal])
+
+  // Modal focus trap (kept verbatim from prior version).
   useEffect(() => {
     if (!showDealModal) return
     modalTriggerRef.current = document.activeElement as HTMLElement | null
     const focusables = modalShellRef.current?.querySelectorAll<HTMLElement>(
       'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])',
     )
-    const first = focusables?.[0]
-    first?.focus()
-
+    focusables?.[0]?.focus()
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
@@ -90,17 +191,16 @@ export function AppMessagesPage() {
       }
       if (event.key !== 'Tab' || !focusables || focusables.length === 0) return
       const focused = document.activeElement as HTMLElement | null
-      const firstFocusable = focusables[0]
-      const lastFocusable = focusables[focusables.length - 1]
-      if (!event.shiftKey && focused === lastFocusable) {
+      const first = focusables[0]
+      const last = focusables[focusables.length - 1]
+      if (!event.shiftKey && focused === last) {
         event.preventDefault()
-        firstFocusable.focus()
-      } else if (event.shiftKey && focused === firstFocusable) {
+        first.focus()
+      } else if (event.shiftKey && focused === first) {
         event.preventDefault()
-        lastFocusable.focus()
+        last.focus()
       }
     }
-
     window.addEventListener('keydown', handleKeyDown)
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
@@ -108,103 +208,87 @@ export function AppMessagesPage() {
     }
   }, [showDealModal])
 
-  const currentThread = threadId ? availableThreads.find((t) => t.id === threadId) ?? null : queryThread
-
-  void version
-  const messageList = currentThread ? getThreadMessages(currentThread.id) : []
-  const threadProduct = currentThread ? getThreadProduct(currentThread) : null
-  const seller = currentThread ? sellers.find((s) => s.id === currentThread.sellerId) : null
-  const relatedDeal = currentThread?.relatedDealId ? (getDealById(currentThread.relatedDealId) ?? null) : null
-
-  const amBuyerInThread = currentThread ? currentThread.buyerId === myId || currentThread.buyerId === mySellerId : false
-  const amSellerInThread = currentThread ? currentThread.sellerId === myId || currentThread.sellerId === mySellerId : false
-  const adminJoined = useMemo(() => {
-    if (!relatedDeal) return false
-    return messageList.some((m) => m.senderRole === 'admin') || Boolean(relatedDeal.assignedManager)
-  }, [messageList, relatedDeal])
-
-  const getCurrentSender = () => {
-    if (!currentThread) return null
-    if (amBuyerInThread) {
-      return { id: currentThread.buyerId, role: 'buyer' as const, label: 'Покупатель' }
+  const handleSend = async () => {
+    if (!currentThread || !inputText.trim() || !canMessage || sending) return
+    const body = inputText.trim()
+    setSending(true)
+    try {
+      const msg = await apiPostMessage(currentThread.id, body)
+      setMessages((prev) => [...prev, msg])
+      setInputText('')
+      void refreshThreads()
+    } catch (e) {
+      setMessagesError(e instanceof Error ? e.message : 'Не удалось отправить сообщение.')
+    } finally {
+      setSending(false)
     }
-    return { id: currentThread.sellerId, role: 'seller' as const, label: 'Продавец' }
   }
 
-  const handleSend = () => {
-    if (!currentThread || !inputText.trim() || !canMessage) return
-    const sender = getCurrentSender()
-    if (!sender) return
-    addMessage(currentThread.id, sender.id, sender.role, inputText.trim())
-    setInputText('')
+  const handleResendEmail = async () => {
+    setResendState('pending')
+    setResendError(null)
+    try {
+      await apiResendVerification()
+      setResendState('sent')
+    } catch (e) {
+      setResendError(e instanceof Error ? e.message : 'Не удалось отправить ссылку.')
+      setResendState('error')
+    }
   }
-
-  const handleResendEmail = () => {
-    setResendSent(true)
-    setTimeout(() => setResendSent(false), 3000)
-  }
-
-  const handleConfirmEmail = () => {
-    auth.setEmailVerified(true)
-  }
+  // Pilot/test escape hatch: while there are no real users and SMTP is not
+  // wired in, testers need to bypass the email gate without copying tokens
+  // from backend logs. Hidden with NEXT_PUBLIC_ENABLE_DEMO_LOGIN=false.
+  const demoEnabled = process.env.NEXT_PUBLIC_ENABLE_DEMO_LOGIN !== 'false'
+  const handleConfirmEmail = () => auth.setEmailVerified(true)
 
   const handleDealSuccess = (dealId: string) => {
     setShowDealModal(false)
     navigate(`/app/deals/${dealId}`, { state: buildFlashState('Сделка создана успешно.') })
   }
 
-  const handleRequestAdmin = () => {
-    // Admin escalation updates both the deal workflow state and the shared chat
-    // so participants see the transition in the same conversation stream.
+  const handleRequestAdmin = async () => {
     if (!currentThread || !relatedDeal) return
-    const sender = getCurrentSender()
-    if (!sender) return
-    const comment = adminComment.trim()
-    const changedBy = sender.label
+    const role = amBuyerInThread ? 'buyer' : amSellerInThread ? 'seller' : null
+    if (!role) return
     if (relatedDeal.status === 'new') {
-      updateDealStatus(relatedDeal.id, 'under_review', changedBy, 'Запрошено подключение администратора из переписки', sender.role)
+      updateDealStatus(relatedDeal.id, 'under_review', auth.displayName ?? auth.email ?? 'Участник', 'Запрошено подключение администратора из переписки', role)
     }
     if (!relatedDeal.assignedManager) {
       updateDealFields(relatedDeal.id, { assignedManager: 'Команда Silk Road Hub' })
     }
-    if (comment) {
-      addMessage(currentThread.id, sender.id, sender.role, `Комментарий для администрации: ${comment}`)
+    if (adminComment.trim()) {
+      try {
+        const msg = await apiPostMessage(currentThread.id, `Комментарий для администрации: ${adminComment.trim()}`)
+        setMessages((prev) => [...prev, msg])
+      } catch {
+        // status update already happened; failure to post the chat note isn't fatal
+      }
     }
-    addSystemMessage(currentThread.id, `${changedBy} запросил подключение администратора по сделке #${relatedDeal.id}.`)
-    addMessage(
-      currentThread.id,
-      'admin-panel',
-      'admin',
-      comment
-        ? 'Администрация подключилась к переписке, приняла комментарий и начинает обработку сделки.'
-        : 'Администрация подключилась к переписке и начинает обработку сделки.',
-    )
     setAdminComment('')
   }
 
-  const handleSendToDocuments = () => {
+  const handleSendToDocuments = async () => {
     if (!currentThread || !relatedDeal) return
-    const sender = getCurrentSender()
-    if (!sender) return
-    const comment = adminComment.trim()
-    const changedBy = sender.label
+    const role = amBuyerInThread ? 'buyer' : amSellerInThread ? 'seller' : null
+    if (!role) return
     if (!['documents_preparation', 'completed', 'cancelled'].includes(relatedDeal.status)) {
-      updateDealStatus(relatedDeal.id, 'documents_preparation', changedBy, 'Стороны подтвердили переход к подготовке документов', sender.role)
+      updateDealStatus(relatedDeal.id, 'documents_preparation', auth.displayName ?? auth.email ?? 'Участник', 'Стороны подтвердили переход к подготовке документов', role)
     }
-    if (comment) {
-      addMessage(currentThread.id, sender.id, sender.role, `Комментарий по документам: ${comment}`)
+    if (adminComment.trim()) {
+      try {
+        const msg = await apiPostMessage(currentThread.id, `Комментарий по документам: ${adminComment.trim()}`)
+        setMessages((prev) => [...prev, msg])
+      } catch {
+        // ignored
+      }
     }
-    addSystemMessage(currentThread.id, `Сделка #${relatedDeal.id} переведена на этап подготовки документов.`)
-    addMessage(currentThread.id, 'admin-panel', 'admin', 'Администрация начала этап подготовки документов. Проверьте карточку сделки и список требуемых файлов.')
     setAdminComment('')
   }
 
   const handleSubmitDocument = async () => {
-    // Document uploads from chat are first-class workflow events: they create a
-    // DealDocument record and can also move the deal into document preparation.
     if (!currentThread || !relatedDeal || (!docName.trim() && !selectedFile)) return
-    const sender = getCurrentSender()
-    if (!sender) return
+    const role = amBuyerInThread ? 'buyer' : amSellerInThread ? 'seller' : null
+    if (!role) return
     setDocError(null)
     setIsUploadingDoc(true)
     const effectiveDocName = docName.trim() || selectedFile?.name || 'Документ'
@@ -223,18 +307,22 @@ export function AppMessagesPage() {
       type: docType,
       status: 'uploaded',
       uploadedAt: new Date().toISOString(),
-      uploadedByRole: sender.role,
-      note: docNote.trim() || `Добавлено через переписку (${sender.label.toLowerCase()})`,
+      uploadedByRole: role,
+      note: docNote.trim() || `Добавлено через переписку (${role === 'buyer' ? 'покупатель' : 'продавец'})`,
       sourceFileName: selectedFile?.name,
       sourceFileSize: selectedFile?.size,
       fileId: fileMetadata?.fileId,
       downloadUrl: fileMetadata?.downloadUrl,
     })
     if (!['documents_preparation', 'completed', 'cancelled'].includes(relatedDeal.status)) {
-      updateDealStatus(relatedDeal.id, 'documents_preparation', sender.label, 'Документы загружены через общую переписку', sender.role)
+      updateDealStatus(relatedDeal.id, 'documents_preparation', auth.displayName ?? auth.email ?? 'Участник', 'Документы загружены через общую переписку', role)
     }
-    addSystemMessage(currentThread.id, `${sender.label} добавил документ «${effectiveDocName}» в сделку #${relatedDeal.id}.`)
-    addMessage(currentThread.id, 'admin-panel', 'admin', 'Документ получен. Администрация проверит его и обновит статус сделки.')
+    try {
+      const msg = await apiPostMessage(currentThread.id, `Документ «${effectiveDocName}» добавлен в сделку.`)
+      setMessages((prev) => [...prev, msg])
+    } catch {
+      // ignored
+    }
     setDocName('')
     setDocType('contract')
     setDocNote('')
@@ -242,8 +330,6 @@ export function AppMessagesPage() {
     setFileInputKey((value) => value + 1)
     setIsUploadingDoc(false)
   }
-
-  const displayThreads = availableThreads
 
   return (
     <div className="flex h-[calc(100vh-8rem)] min-h-[400px] flex-col py-6 lg:flex-row lg:gap-6">
@@ -253,7 +339,12 @@ export function AppMessagesPage() {
           <h2 className="text-base font-semibold text-slate-900">Сообщения</h2>
         </div>
         <div className="max-h-[280px] overflow-y-auto lg:max-h-[calc(100vh-14rem)]">
-          {displayThreads.length === 0 ? (
+          {threadsError && (
+            <div className="m-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              {threadsError}
+            </div>
+          )}
+          {!threadsError && threads.length === 0 ? (
             <div className="p-4">
               <div className="rounded-2xl border border-dashed border-border bg-slate-50 p-4 text-sm text-slate-500">
                 <div className="font-medium text-slate-900">Пока нет диалогов</div>
@@ -264,39 +355,41 @@ export function AppMessagesPage() {
               </div>
             </div>
           ) : (
-            displayThreads.map((t) => {
-              const product = getThreadProduct(t)
-              const sellerName = sellers.find((s) => s.id === t.sellerId)?.name ?? t.sellerId
-              const buyerLabel = t.buyerId
-              const imBuyerHere = t.buyerId === myId || t.buyerId === mySellerId
-              const msgs = getThreadMessages(t.id)
-              const lastMsg = msgs[msgs.length - 1]
+            threads.map((t) => {
               const isActive = t.id === currentThread?.id
-              const threadDeal = t.relatedDealId ? getDealById(t.relatedDealId) : null
+              const counterpartName = t.buyerId === auth.userId ? t.sellerName : t.buyerName
+              const threadDeal = getDealByThreadId(t.id)
               return (
                 <Link
                   key={t.id}
                   to={`/app/messages/${t.id}`}
                   className={cx(
                     'block border-b border-border p-3 text-left transition-colors',
-                    isActive ? 'bg-brand-yellow-soft' : 'hover:bg-slate-50'
+                    isActive ? 'bg-brand-yellow-soft' : 'hover:bg-slate-50',
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-900">{product?.name ?? sellerName}</span>
+                    <span className="font-medium text-slate-900">
+                      {t.productName ?? counterpartName ?? 'Диалог'}
+                    </span>
                     {threadDeal && (
                       <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium ${DEAL_STATUS_TONE[threadDeal.status]}`}>
                         {DEAL_STATUS_LABELS[threadDeal.status]}
                       </span>
                     )}
+                    {t.unreadCount > 0 && (
+                      <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-brand-blue px-1.5 text-[10px] font-semibold text-white">
+                        {t.unreadCount > 9 ? '9+' : t.unreadCount}
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-slate-500">
-                    {imBuyerHere ? `Продавец: ${sellerName}` : `Покупатель: ${buyerLabel}`}
+                    {t.buyerId === auth.userId ? `Продавец: ${t.sellerName ?? '—'}` : `Покупатель: ${t.buyerName ?? '—'}`}
                   </div>
-                  {lastMsg && (
+                  {t.lastMessageBody && (
                     <div className="mt-1 truncate text-sm text-slate-600">
-                      {lastMsg.isSystemMessage ? '⚙ ' : lastMsg.senderRole === 'admin' ? '👤 Админ: ' : ''}
-                      {lastMsg.body}
+                      {t.lastMessageRole === 'system' ? '⚙ ' : t.lastMessageRole === 'admin' ? '👤 Админ: ' : ''}
+                      {t.lastMessageBody}
                     </div>
                   )}
                 </Link>
@@ -308,6 +401,11 @@ export function AppMessagesPage() {
 
       {/* Chat area */}
       <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-white lg:mt-0">
+        {openError && !currentThread && (
+          <div className="m-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {openError}
+          </div>
+        )}
         {!currentThread ? (
           <div className="flex flex-1 items-center justify-center p-8 text-center text-slate-500">
             Выберите диалог или откройте товар в каталоге и нажмите «Написать продавцу».
@@ -318,7 +416,9 @@ export function AppMessagesPage() {
             <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-slate-900">{threadProduct?.name ?? seller?.name ?? 'Диалог'}</h3>
+                  <h3 className="font-semibold text-slate-900">
+                    {currentThread.productName ?? (amBuyerInThread ? currentThread.sellerName : currentThread.buyerName) ?? 'Диалог'}
+                  </h3>
                   {relatedDeal && (
                     <Link to={`/app/deals/${relatedDeal.id}`}>
                       <Badge tone="neutral" className={DEAL_STATUS_TONE[relatedDeal.status]}>
@@ -329,8 +429,8 @@ export function AppMessagesPage() {
                 </div>
                 <p className="text-sm text-slate-600">
                   {amBuyerInThread
-                    ? `Продавец: ${seller?.name ?? currentThread.sellerId} · ${seller?.country ?? ''}`
-                    : `Покупатель: ${currentThread.buyerId}`}
+                    ? `Продавец: ${currentThread.sellerName ?? currentThread.sellerId}`
+                    : `Покупатель: ${currentThread.buyerName ?? currentThread.buyerId}`}
                 </p>
               </div>
               <div className="flex flex-wrap items-start justify-end gap-2">
@@ -354,25 +454,9 @@ export function AppMessagesPage() {
                     </Button>
                   </Link>
                 )}
-                {relatedDeal && !['completed', 'cancelled'].includes(relatedDeal.status) && (
-                  <Button variant="primary" size="sm" className="gap-1" onClick={handleRequestAdmin}>
-                    <ShieldCheck className="size-3.5" /> Вызвать администратора
-                  </Button>
-                )}
-                {relatedDeal && !['documents_preparation', 'completed', 'cancelled'].includes(relatedDeal.status) && (
-                  <Button variant="secondary" size="sm" className="gap-1" onClick={handleSendToDocuments}>
-                    <FileText className="size-3.5" /> На подготовку документов
-                  </Button>
-                )}
-                {!relatedDeal && !threadProduct && (
-                  <Link to={`/catalog/seller/${currentThread.sellerId}`}>
-                    <Button variant="primary" size="sm" className="gap-1">
-                      <ShoppingBag className="size-3.5" /> Выбрать товар для сделки
-                    </Button>
-                  </Link>
-                )}
               </div>
             </div>
+
             {relatedDeal && (
               <div className="shrink-0 border-b border-border bg-slate-50 p-4">
                 <div className="flex flex-wrap items-center gap-2">
@@ -386,29 +470,30 @@ export function AppMessagesPage() {
                   <div className="rounded-2xl border border-border bg-white p-4">
                     <div className="text-sm font-semibold text-slate-900">Комментарий для администрации</div>
                     <p className="mt-1 text-xs text-slate-500">
-                      Здесь стороны могут пояснить детали сделки, условия и что именно нужно обработать.
+                      Опишите, что нужно проверить, согласовать или передать на следующий этап.
                     </p>
                     <div className="mt-3">
                       <Textarea
                         value={adminComment}
                         onChange={(e) => setAdminComment(e.target.value)}
-                        placeholder="Напр.: согласовали объем, нужен контракт и проверка сертификатов."
+                        placeholder="Напр.: согласовали объём, нужен контракт и проверка сертификатов."
                         rows={4}
                       />
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Button variant="primary" size="sm" className="gap-1" onClick={handleRequestAdmin}>
+                      <Button variant="primary" size="sm" className="gap-1" onClick={() => void handleRequestAdmin()}>
                         <ShieldCheck className="size-3.5" /> Позвать администратора
                       </Button>
-                      <Button variant="secondary" size="sm" className="gap-1" onClick={handleSendToDocuments}>
+                      <Button variant="secondary" size="sm" className="gap-1" onClick={() => void handleSendToDocuments()}>
                         <FileText className="size-3.5" /> Передать в обработку документов
                       </Button>
                     </div>
                   </div>
+
                   <div className="rounded-2xl border border-border bg-white p-4">
-                    <div className="text-sm font-semibold text-slate-900">Документы в общий поток сделки</div>
+                    <div className="text-sm font-semibold text-slate-900">Документы в сделку</div>
                     <p className="mt-1 text-xs text-slate-500">
-                      Добавленные документы сразу попадут в сделку и будут видны администратору в обработке.
+                      Файл попадает в карточку сделки и виден администратору.
                     </p>
                     <div className="mt-3 grid gap-3">
                       <Input
@@ -463,35 +548,55 @@ export function AppMessagesPage() {
                 </div>
               </div>
             )}
-            {!relatedDeal && (
-              <div className="shrink-0 border-b border-border bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                {threadProduct
-                  ? 'После согласования нажмите «Оформить сделку», затем сможете вызвать администратора и передать сделку на этап документов.'
-                  : 'В этом диалоге пока не выбран товар. Сначала выберите товар продавца, затем оформите сделку и передайте ее администрации.'}
-              </div>
-            )}
 
             {/* Email verification gate (buyers only) */}
             {isBuyerRole && !canMessage && (
               <div className="mx-4 mt-4 shrink-0 rounded-xl border border-amber-200 bg-amber-50 p-4">
                 <p className="font-medium text-amber-800">Подтвердите почту, чтобы написать продавцу</p>
-                <p className="mt-1 text-sm text-amber-700">Отправьте сообщение только после подтверждения email.</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button variant="secondary" size="sm" onClick={handleResendEmail} disabled={resendSent}>
-                    {resendSent ? 'Письмо отправлено' : 'Отправить письмо повторно'}
+                <p className="mt-1 text-sm text-amber-700">
+                  Откройте ссылку из письма — после подтверждения вы сможете отправлять сообщения. Если письмо не пришло,
+                  отправьте новое.
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void handleResendEmail()}
+                    disabled={resendState === 'pending' || resendState === 'sent'}
+                  >
+                    {resendState === 'pending'
+                      ? 'Отправляем…'
+                      : resendState === 'sent'
+                        ? 'Ссылка отправлена'
+                        : 'Отправить ссылку повторно'}
                   </Button>
-                  <Button variant="primary" size="sm" onClick={handleConfirmEmail}>
-                    Я уже подтвердил почту
-                  </Button>
+                  {demoEnabled && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleConfirmEmail}
+                      title="Тестовый шорткат: включается NEXT_PUBLIC_ENABLE_DEMO_LOGIN"
+                    >
+                      Я уже подтвердил почту (demo)
+                    </Button>
+                  )}
+                  {resendState === 'error' && resendError && (
+                    <span role="alert" className="text-sm text-rose-700">{resendError}</span>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Messages */}
             <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50/70 px-4 pt-4 pb-8">
+              {messagesError && (
+                <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                  {messagesError}
+                </div>
+              )}
               <div className="flex min-h-full flex-col justify-end gap-3">
-                {messageList.map((m) => {
-                  if (m.isSystemMessage) {
+                {messages.map((m) => {
+                  if (m.isSystemMessage || m.senderRole === 'system') {
                     return (
                       <div key={m.id} className="flex justify-center">
                         <div className="max-w-[80%] rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-xs text-slate-500 italic shadow-sm">
@@ -512,13 +617,13 @@ export function AppMessagesPage() {
                       </div>
                     )
                   }
-                  const isMine = (amBuyerInThread && m.senderRole === 'buyer') || (amSellerInThread && !amBuyerInThread && m.senderRole === 'seller')
+                  const isMine = m.senderId === auth.userId
                   return (
                     <div key={m.id} className={isMine ? 'ml-8 flex justify-end' : 'mr-8'}>
                       <div
                         className={cx(
                           'max-w-[82%] rounded-2xl px-4 py-3 text-sm shadow-sm ring-1 ring-black/5',
-                          isMine ? 'bg-brand-blue text-white' : 'border border-slate-200 bg-white text-slate-900'
+                          isMine ? 'bg-brand-blue text-white' : 'border border-slate-200 bg-white text-slate-900',
                         )}
                       >
                         <p className="whitespace-pre-wrap">{m.body}</p>
@@ -539,14 +644,19 @@ export function AppMessagesPage() {
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      void handleSend()
+                    }
+                  }}
                   placeholder={canMessage ? 'Введите сообщение…' : 'Подтвердите почту, чтобы написать'}
                   className="flex-1 rounded-xl border border-border px-4 py-2 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
-                  disabled={!canMessage}
+                  disabled={!canMessage || sending}
                 />
-                <Button variant="primary" onClick={handleSend} disabled={!canMessage || !inputText.trim()} className="gap-1">
+                <Button variant="primary" onClick={() => void handleSend()} disabled={!canMessage || !inputText.trim() || sending} className="gap-1">
                   <Send className="size-4" />
-                  Отправить
+                  {sending ? 'Отправка…' : 'Отправить'}
                 </Button>
               </div>
             </div>

@@ -23,6 +23,9 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Pilot/test default ON: there are no real users yet and operators rely on
+  // these buttons to navigate the app. Set NEXT_PUBLIC_ENABLE_DEMO_LOGIN=false
+  // before public launch to hide the credentials.
   const demoEnabled = process.env.NEXT_PUBLIC_ENABLE_DEMO_LOGIN !== 'false'
 
   const demoAccounts = [
@@ -68,11 +71,11 @@ export function LoginPage() {
         <Card>
           <CardHeader title="Данные для входа" />
           <CardContent className="grid gap-3">
-            <div aria-live="polite">
-              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Быстрый вход для demo</div>
-              <div className="flex flex-wrap gap-2">
-                {demoEnabled ? (
-                  demoAccounts.map((account) => (
+            {demoEnabled && (
+              <div aria-live="polite">
+                <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Быстрый вход для demo</div>
+                <div className="flex flex-wrap gap-2">
+                  {demoAccounts.map((account) => (
                     <Button
                       key={account.label}
                       type="button"
@@ -83,12 +86,10 @@ export function LoginPage() {
                     >
                       {account.label}
                     </Button>
-                  ))
-                ) : (
-                  <span className="text-xs text-slate-500">Demo-аккаунты отключены переменной NEXT_PUBLIC_ENABLE_DEMO_LOGIN.</span>
-                )}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <Field label="Email" htmlFor="login-email">
               <Input
@@ -135,9 +136,9 @@ export function LoginPage() {
               <ButtonLink to="/request-access" variant="secondary" size="sm">
                 Запросить доступ
               </ButtonLink>
-              <div className="rounded-xl border border-border bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                В production используйте только реальные серверные учетные записи.
-              </div>
+              <ButtonLink to="/register" variant="secondary" size="sm">
+                Регистрация
+              </ButtonLink>
             </div>
           </CardContent>
         </Card>

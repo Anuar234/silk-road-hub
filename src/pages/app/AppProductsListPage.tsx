@@ -10,10 +10,14 @@ function statusTone(status: ProductStatus) {
   switch (status) {
     case 'Опубликовано':
       return 'success' as const
+    case 'В переговорах':
+      return 'info' as const
     case 'На модерации':
       return 'info' as const
     case 'Отклонено':
       return 'warning' as const
+    case 'Архивировано':
+      return 'neutral' as const
     default:
       return 'neutral' as const
   }

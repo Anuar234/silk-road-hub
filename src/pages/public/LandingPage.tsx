@@ -1,17 +1,23 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  ArrowRight,
   ArrowUpRight,
+  Building2,
   CalendarDays,
   CheckCircle2,
   Globe2,
   Megaphone,
   MapPin,
+  ShieldCheck,
+  ShoppingBag,
   Sparkles,
+  TrendingUp,
 } from 'lucide-react'
 import { Container } from '@widgets/layout/Container'
 import { Card, CardContent } from '@shared/ui/Card'
 import { cx } from '@shared/lib/cx'
+import { useAuth } from '@features/auth/auth'
 
 const SLIDE_INTERVAL_MS = 10_000
 
@@ -276,18 +282,19 @@ export function LandingPage() {
       <div aria-hidden className="pointer-events-none absolute left-1/3 top-[55%] size-[380px] rounded-full bg-emerald-200/40 blur-3xl" />
 
       <section className="relative border-b border-border">
-        <Container className="py-14 sm:py-20">
-          <div className="mb-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-600 backdrop-blur-sm">
-              <Globe2 className="size-3.5 text-brand-blue" />
-              Silk Road Hub · B2B-платформа экспорта
-            </div>
-            <div className="inline-flex items-center gap-4 text-[12px] text-slate-600">
-              <TrustDot>1 248 компаний</TrustDot>
-              <TrustDot>доступ по верификации</TrustDot>
-            </div>
-          </div>
+        <Container className="pb-10 pt-12 sm:pb-14 sm:pt-16">
+          <HeroBanner />
+        </Container>
+      </section>
 
+      <section className="relative border-b border-border bg-white/40">
+        <Container className="py-10 sm:py-12">
+          <RolePillars />
+        </Container>
+      </section>
+
+      <section className="relative border-b border-border">
+        <Container className="py-12 sm:py-16">
           <div className="grid items-stretch gap-6 lg:grid-cols-2">
             <GeneralPartnersCarousel partners={GENERAL_PARTNERS} />
             <AnnouncementsPreviewCard />
@@ -300,6 +307,176 @@ export function LandingPage() {
           <PartnersNewsCarousel partners={MODEST_PARTNERS} />
         </Container>
       </section>
+    </div>
+  )
+}
+
+function HeroBanner() {
+  const auth = useAuth()
+  const isAuth = auth.isAuthenticated
+
+  // Primary CTAs adapt to auth state. Anonymous visitors see registration as
+  // the conversion path; logged-in users see a direct shortcut to their cabinet.
+  const primaryCta = isAuth
+    ? { to: '/app/home', label: 'В кабинет' }
+    : { to: '/register', label: 'Создать аккаунт' }
+  const secondaryCta = isAuth
+    ? { to: '/catalog', label: 'Открыть каталог' }
+    : { to: '/login', label: 'Войти' }
+
+  return (
+    <div className="grid items-start gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="flex flex-col gap-6">
+        <div className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-white/80 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-600 backdrop-blur-sm">
+          <Globe2 className="size-3.5 text-brand-blue" />
+          Silk Road Hub · B2B-платформа экспорта
+        </div>
+
+        <h1 className="text-balance text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+          Цифровой коридор экспорта Казахстана
+        </h1>
+
+        <p className="max-w-2xl text-pretty text-base text-slate-600 sm:text-lg">
+          Сквозное сопровождение экспортных сделок и инвестиционных проектов: каталог товаров,
+          переговоры, контракты, логистика и гарантии — в одном цифровом контуре с поддержкой
+          QazTrade, KazakhExport и Kazakh Invest.
+        </p>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            to={primaryCta.to}
+            className="inline-flex items-center gap-2 rounded-xl bg-brand-blue px-5 py-3 text-sm font-semibold text-white shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+          >
+            {primaryCta.label}
+            <ArrowRight className="size-4" />
+          </Link>
+          <Link
+            to={secondaryCta.to}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition-colors duration-200 hover:bg-slate-50"
+          >
+            {secondaryCta.label}
+          </Link>
+          <Link
+            to="/investments"
+            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-3 text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-brand-blue"
+          >
+            Инвестпроекты
+            <ArrowRight className="size-3.5" />
+          </Link>
+        </div>
+
+        <div className="flex flex-wrap gap-x-5 gap-y-2 text-[12px] text-slate-600">
+          <TrustDot>Доступ по верификации компании</TrustDot>
+          <TrustDot>4 языка интерфейса</TrustDot>
+          <TrustDot>Сделки от заявки до контракта</TrustDot>
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-border bg-white/85 p-5 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:p-6">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          Что входит в платформу
+        </div>
+        <ul className="mt-4 grid gap-3">
+          <HeroFeature
+            icon={<ShoppingBag className="size-4" />}
+            title="Каталог товаров"
+            description="Сектора, страны, регионы РК. Все фильтры одновременно."
+          />
+          <HeroFeature
+            icon={<Building2 className="size-4" />}
+            title="Инвестиционные проекты"
+            description="Kazakh Invest, ГЧП и частные инициативы с верифицированными инициаторами."
+          />
+          <HeroFeature
+            icon={<TrendingUp className="size-4" />}
+            title="Сделки с историей"
+            description="Переговоры, документы, статусы — в одной карточке от первого контакта до подписания."
+          />
+          <HeroFeature
+            icon={<ShieldCheck className="size-4" />}
+            title="Институциональная поддержка"
+            description="Гарантии KazakhExport и сопровождение Kazakh Invest подключаются к сделке."
+          />
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+function HeroFeature({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <li className="flex items-start gap-3 rounded-2xl border border-border/70 bg-white p-3 transition-colors duration-200 hover:bg-brand-yellow-soft/40">
+      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-blue/10 text-brand-blue">
+        {icon}
+      </span>
+      <div>
+        <div className="text-sm font-semibold text-slate-900">{title}</div>
+        <div className="mt-0.5 text-xs leading-snug text-slate-600">{description}</div>
+      </div>
+    </li>
+  )
+}
+
+function RolePillars() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <RoleCard
+        accent="bg-brand-blue/10 text-brand-blue"
+        icon={<ShoppingBag className="size-5" />}
+        title="Покупателю"
+        description="Найдите проверенных поставщиков из РК и СНГ. Ведите переписку и сделку до контракта."
+        cta={{ to: '/catalog', label: 'Открыть каталог' }}
+      />
+      <RoleCard
+        accent="bg-emerald-100 text-emerald-700"
+        icon={<TrendingUp className="size-5" />}
+        title="Экспортёру"
+        description="Разместите товары, принимайте запросы и ведите все сделки в одном месте."
+        cta={{ to: '/register', label: 'Стать продавцом' }}
+      />
+      <RoleCard
+        accent="bg-amber-100 text-amber-700"
+        icon={<Building2 className="size-5" />}
+        title="Инвестору"
+        description="Изучайте проекты Kazakh Invest и частные инициативы. Размещайте собственные."
+        cta={{ to: '/investments', label: 'Каталог проектов' }}
+      />
+      <RoleCard
+        accent="bg-slate-100 text-slate-700"
+        icon={<ShieldCheck className="size-5" />}
+        title="Институциональным партнёрам"
+        description="Мониторинг сделок, аналитика и отчётность для QazTrade, KazakhExport, Kazakh Invest."
+        cta={{ to: '/about', label: 'О платформе' }}
+      />
+    </div>
+  )
+}
+
+function RoleCard({
+  accent,
+  icon,
+  title,
+  description,
+  cta,
+}: {
+  accent: string
+  icon: React.ReactNode
+  title: string
+  description: string
+  cta: { to: string; label: string }
+}) {
+  return (
+    <div className="flex h-full flex-col gap-3 rounded-2xl border border-border bg-white p-5 transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-24px_rgba(15,23,42,0.25)]">
+      <div className={cx('grid size-10 place-items-center rounded-xl', accent)}>{icon}</div>
+      <div className="text-base font-semibold text-slate-900">{title}</div>
+      <div className="flex-1 text-sm leading-snug text-slate-600">{description}</div>
+      <Link
+        to={cta.to}
+        className="inline-flex items-center gap-1 text-sm font-semibold text-brand-blue hover:underline"
+      >
+        {cta.label}
+        <ArrowRight className="size-3.5" />
+      </Link>
     </div>
   )
 }

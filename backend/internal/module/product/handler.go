@@ -118,3 +118,21 @@ func (h *Handler) Submit(c *gin.Context) {
 	}
 	apierror.OK(c, http.StatusOK, nil)
 }
+
+func (h *Handler) Archive(c *gin.Context) {
+	sess := middleware.GetSession(c)
+	if err := h.svc.Archive(c.Request.Context(), c.Param("id"), sess.Role, sess.UserID); err != nil {
+		apierror.BadRequest(c, err.Error())
+		return
+	}
+	apierror.OK(c, http.StatusOK, nil)
+}
+
+func (h *Handler) Unarchive(c *gin.Context) {
+	sess := middleware.GetSession(c)
+	if err := h.svc.Unarchive(c.Request.Context(), c.Param("id"), sess.Role, sess.UserID); err != nil {
+		apierror.BadRequest(c, err.Error())
+		return
+	}
+	apierror.OK(c, http.StatusOK, nil)
+}

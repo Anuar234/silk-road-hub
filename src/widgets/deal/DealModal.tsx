@@ -3,7 +3,7 @@ import { Button } from '@shared/ui/Button'
 import { Input } from '@shared/ui/Input'
 import { Textarea } from '@shared/ui/Textarea'
 import { createDeal } from '@features/deals/dealData'
-import { addSystemMessage, linkThreadToDeal } from '@features/messaging/messagingData'
+import { apiPostMessage } from '@shared/api/messagingApi'
 import type { Product } from '@mocks/mockData'
 
 type DealModalProps = {
@@ -23,7 +23,7 @@ export function DealModal({ product, buyerId, threadId, onClose, onSuccess }: De
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     if (!quantity.trim() || !destinationCountry.trim() || !targetTimeline.trim()) {
@@ -38,8 +38,16 @@ export function DealModal({ product, buyerId, threadId, onClose, onSuccess }: De
       buyerComment: buyerComment.trim(),
     })
     if (threadId) {
-      addSystemMessage(threadId, `Создана сделка #${deal.id} — ${product.name}, ${quantity.trim()} → ${destinationCountry.trim()}`)
-      linkThreadToDeal(threadId, deal.id)
+      // Best-effort: tell the counterpart the deal was created. Failure here
+      // (e.g. counterpart isn't a real DB user yet) doesn't block deal creation.
+      try {
+        await apiPostMessage(
+          threadId,
+          `Оформлена сделка по товару «${product.name}» — ${quantity.trim()} → ${destinationCountry.trim()}.`,
+        )
+      } catch {
+        // ignored — deal still exists locally and the user will land on its page
+      }
     }
     setSubmitted(true)
     onSuccess(deal.id)
@@ -60,7 +68,7 @@ export function DealModal({ product, buyerId, threadId, onClose, onSuccess }: De
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-white p-6 shadow-lg">
+    <form onSubmit={(e) => void handleSubmit(e)} className="rounded-2xl border border-border bg-white p-6 shadow-lg">
       <h3 className="text-lg font-semibold text-slate-900">Оформить сделку</h3>
       <p className="mt-1 text-sm text-slate-600">
         Товар: {product.name}. Администрация проверит заявку и свяжется с обеими сторонами.

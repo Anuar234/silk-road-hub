@@ -28,6 +28,8 @@ import {
 import { getThreadMessages, addMessage, addSystemMessage } from '@features/messaging/messagingData'
 import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 import { ContractSection, LogisticsSection, PaymentSection, GuaranteesSection } from '@widgets/deal/DealSubSections'
+import { DealPhaseTracker } from '@widgets/deal/DealPhaseTracker'
+import { DealIntentsSection } from '@features/deals/DealIntentsSection'
 
 /**
  * Primary admin workflow screen.
@@ -41,6 +43,9 @@ const STATUS_ORDER: DealStatus[] = [
   'waiting_seller_info',
   'documents_preparation',
   'negotiating',
+  'intent_fixed',
+  'contract_signed',
+  'in_execution',
   'approved',
   'completed',
   'cancelled',
@@ -235,6 +240,10 @@ export function AdminDealDetailPage() {
         <Badge tone="neutral" className={DEAL_STATUS_TONE[deal.status]}>{DEAL_STATUS_LABELS[deal.status]}</Badge>
         {deal.assignedManager && <Badge tone="info">Менеджер: {deal.assignedManager}</Badge>}
       </div>
+
+      <DealPhaseTracker status={deal.status} />
+
+      <DealIntentsSection dealId={deal.id} canParticipate={false} />
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_1.2fr_1fr]">
         <div className="space-y-6">

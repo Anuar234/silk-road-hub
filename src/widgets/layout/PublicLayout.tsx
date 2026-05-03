@@ -82,7 +82,7 @@ export function PublicLayout() {
             <div>
               <div className="text-sm font-semibold text-slate-900">Silk Road Hub</div>
               <div className="mt-1 text-sm text-slate-600">
-                Контакт:{' '}
+                {t('footer.contact', 'Контакт')}:{' '}
                 <a className="font-medium text-brand-blue transition-opacity duration-200 hover:underline hover:opacity-90" href="mailto:hello@silkroadhub.io">
                   hello@silkroadhub.io
                 </a>
@@ -91,19 +91,19 @@ export function PublicLayout() {
           </div>
           <div className="flex flex-wrap gap-3 md:justify-end">
             <NavLink className="text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-slate-900" to="/about">
-              О нас
+              {t('footer.about', 'О нас')}
             </NavLink>
             <span className="text-slate-300">/</span>
             <NavLink className="text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-slate-900" to="/analytics">
-              Аналитика
+              {t('footer.analytics', 'Аналитика')}
             </NavLink>
             <span className="text-slate-300">/</span>
             <NavLink className="text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-slate-900" to="/request-access">
-              Доступ
+              {t('footer.access', 'Доступ')}
             </NavLink>
             <span className="text-slate-300">/</span>
             <NavLink className="text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-slate-900" to="/contacts">
-              Контакты
+              {t('footer.contacts', 'Контакты')}
             </NavLink>
           </div>
         </Container>

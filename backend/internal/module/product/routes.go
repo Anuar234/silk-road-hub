@@ -17,5 +17,7 @@ func RegisterRoutes(api *gin.RouterGroup, svc *Service, store *session.Store) {
 		products.PUT("/:id", middleware.Auth(store), middleware.RequireRole("seller", "admin"), h.Update)
 		products.DELETE("/:id", middleware.Auth(store), middleware.RequireRole("seller", "admin"), h.Delete)
 		products.POST("/:id/submit", middleware.Auth(store), middleware.RequireRole("seller"), h.Submit)
+		products.POST("/:id/archive", middleware.Auth(store), middleware.RequireRole("seller", "admin"), h.Archive)
+		products.POST("/:id/unarchive", middleware.Auth(store), middleware.RequireRole("seller", "admin"), h.Unarchive)
 	}
 }

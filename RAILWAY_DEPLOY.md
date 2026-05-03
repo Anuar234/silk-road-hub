@@ -89,4 +89,43 @@ curl https://<backend>.up.railway.app/api/auth/csrf
 2. Убедиться, что в backend-сервисе стоит `SRH_SECURE_COOKIES=true`
 3. Убедиться, что в frontend-сервисе `CSP_STRICT_ENABLED=true`
 4. Убедиться, что `SRH_CORS_ORIGIN` указывает **ровно** на домен frontend'а (без trailing slash)
-5. Настроить бэкапы Postgres через Railway **Backups** (для Pro-плана — автоматические; для базового — `pg_dump` cron на внешней машине)
+5. Включить резервное копирование (см. ниже)
+
+## Резервное копирование (ТЗ §9)
+
+### Локально / docker-compose
+В `docker-compose.yml` есть сервис `backup` — контейнер `postgres:16-alpine`, который раз в `BACKUP_INTERVAL_HOURS` (по умолчанию 24 ч) делает `pg_dump | gzip` в Docker-volume `backup_data`. Старые архивы старше `BACKUP_RETENTION_DAYS` дней удаляются автоматически.
+
+```bash
+# Стартует автоматически вместе с docker-compose up
+docker-compose up -d backup
+
+# Разовый бэкап «сейчас»
+make backup
+
+# Список архивов
+make backup-list
+
+# Восстановление (двухступенчатое подтверждение)
+make restore FILE=/backups/silkroadhub-20260105-031500.sql.gz
+
+# Восстановление без интерактива (для CI)
+make restore FILE=/backups/silkroadhub-20260105-031500.sql.gz CONFIRM=1
+```
+
+Архивы лежат в named-volume `backup_data`. Чтобы вытащить архив на хост:
+
+```bash
+docker run --rm -v silk-road-hub_backup_data:/src -v "$PWD":/dst alpine \
+  cp /src/silkroadhub-20260105-031500.sql.gz /dst/
+```
+
+### Railway (production)
+Railway Postgres-плагин на платных планах (Pro+) делает **автоматические** ежедневные снапшоты — включается в **Service → Backups** в UI. Restore — из этой же вкладки в один клик.
+
+Если используется бесплатный/Hobby-план Postgres без managed-backups:
+1. Поднимите отдельный `backup`-сервис в Railway, сослав его на Postgres через `${{Postgres.DATABASE_URL}}`. Можно деплоить тот же `scripts/backup.sh` обёрнутый в крошечный Dockerfile, либо использовать сторонний cron-сервис.
+2. Архивы желательно складывать **за пределы Railway** — в S3 / Backblaze / Yandex Object Storage. `aws s3 cp` после `pg_dump` решает задачу одной строкой.
+3. Минимум: настроить CI-job, который раз в сутки тянет `pg_dump` через публичный URL Postgres и кладёт архив в защищённое хранилище.
+
+⚠️ **Не храните бэкапы только в том же контейнере, что и БД.** Падение volume = потеря и БД, и резерва.

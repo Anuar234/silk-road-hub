@@ -11,8 +11,11 @@ func RegisterRoutes(api *gin.RouterGroup, svc *Service, store *session.Store) {
 
 	users := api.Group("/users", middleware.Auth(store))
 	{
-		users.GET("", middleware.RequireRole("admin"), h.List)
-		users.PUT("/:id/verify", middleware.RequireRole("admin"), h.Verify)
+		// ТЗ §4.4 — institutional users (QazTrade and partners) need to read
+		// the user list and approve/reject verification. Role changes remain
+		// admin-only because they affect platform access scope.
+		users.GET("", middleware.RequireRole("admin", "institutional"), h.List)
+		users.PUT("/:id/verify", middleware.RequireRole("admin", "institutional"), h.Verify)
 		users.PUT("/:id/role", middleware.RequireRole("admin"), h.UpdateRole)
 		users.POST("/:id/docs", h.AttachDoc)
 	}

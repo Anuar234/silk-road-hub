@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from '@shared/ui/Card'
 import { applyOfflineImageFallback } from '@shared/ui/imageFallback'
 import { DealModal } from '@widgets/deal/DealModal'
 import { useAuth } from '@features/auth/auth'
-import { findOrCreateThread, getParticipantId, getSellerIdFromAuth } from '@features/messaging/messagingData'
+import { getParticipantId, getSellerIdFromAuth } from '@features/messaging/messagingData'
 import { products } from '@mocks/mockData'
 import { getExistingDealThreadForAuth } from '@features/platform/platformSelectors'
 import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
@@ -51,8 +51,19 @@ export function AppCatalogProductPage() {
 
   const handleMessageSeller = () => {
     if (!canMessage) return
-    const thread = linkedFlow.thread ?? findOrCreateThread(myId, product.seller.id, product.id)
-    navigate(`/app/messages/${thread.id}`)
+    // If the deal-thread already exists in the local store, open it directly.
+    // Otherwise hand off to /app/messages with query params and let the
+    // messaging page call apiOpenThread against the real backend. Mock-only
+    // seller IDs won't resolve there — that path is only meaningful for real
+    // DB-backed catalog rows.
+    if (linkedFlow.thread) {
+      navigate(`/app/messages/${linkedFlow.thread.id}`)
+      return
+    }
+    const params = new URLSearchParams()
+    params.set('seller', product.seller.id)
+    params.set('product', product.id)
+    navigate(`/app/messages?${params.toString()}`)
   }
 
   return (

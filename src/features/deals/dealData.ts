@@ -13,9 +13,64 @@ export type DealStatus =
   | 'waiting_seller_info'
   | 'documents_preparation'
   | 'negotiating'
+  | 'intent_fixed'
+  | 'contract_signed'
+  | 'in_execution'
   | 'approved'
   | 'completed'
   | 'cancelled'
+
+// ТЗ §5.3 defines the deal lifecycle as five phases. The internal status set is
+// finer-grained (RFQ pipeline + back-office milestones), so we expose a stable
+// mapping from each status to its ТЗ phase. UI uses this to render the phase
+// tracker and reports use it to aggregate cross-status statistics.
+export type DealPhase =
+  | 'negotiation'
+  | 'intent_fixed'
+  | 'contract_signed'
+  | 'in_execution'
+  | 'completed'
+  | 'cancelled'
+
+export const DEAL_PHASE_ORDER: DealPhase[] = [
+  'negotiation',
+  'intent_fixed',
+  'contract_signed',
+  'in_execution',
+  'completed',
+]
+
+export const DEAL_PHASE_LABELS: Record<DealPhase, string> = {
+  negotiation: 'Переговоры',
+  intent_fixed: 'Намерения зафиксированы',
+  contract_signed: 'Контракт подписан',
+  in_execution: 'В процессе исполнения',
+  completed: 'Завершена',
+  cancelled: 'Отменена',
+}
+
+export function dealPhase(status: DealStatus): DealPhase {
+  switch (status) {
+    case 'intent_fixed':
+      return 'intent_fixed'
+    case 'contract_signed':
+      return 'contract_signed'
+    case 'in_execution':
+      return 'in_execution'
+    case 'completed':
+      return 'completed'
+    case 'cancelled':
+      return 'cancelled'
+    case 'approved':
+      // Legacy "approved" was used as the terminal pre-completion state in the
+      // RFQ pipeline. Treat it as "contract signed" for ТЗ reporting until it
+      // is migrated out.
+      return 'contract_signed'
+    default:
+      // new, under_review, waiting_*, documents_preparation, negotiating
+      return 'negotiation'
+  }
+}
 
 export type DocType = 'invoice' | 'contract' | 'certificate' | 'shipping' | 'other'
 export type DocStatus = 'not_requested' | 'requested' | 'uploaded' | 'under_review' | 'approved' | 'rejected' | 'missing_info'
@@ -101,9 +156,12 @@ export const DEAL_STATUS_LABELS: Record<DealStatus, string> = {
   waiting_seller_info: 'Ждём информацию от продавца',
   documents_preparation: 'Подготовка документов',
   negotiating: 'Переговоры',
+  intent_fixed: 'Намерения зафиксированы',
+  contract_signed: 'Контракт подписан',
+  in_execution: 'В процессе исполнения',
   approved: 'Одобрено',
-  completed: 'Завершено',
-  cancelled: 'Отменено',
+  completed: 'Завершена',
+  cancelled: 'Отменена',
 }
 
 export const DEAL_STATUS_TONE: Record<DealStatus, string> = {
@@ -113,6 +171,9 @@ export const DEAL_STATUS_TONE: Record<DealStatus, string> = {
   waiting_seller_info: 'bg-yellow-50 text-yellow-700 border-yellow-200',
   documents_preparation: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   negotiating: 'bg-purple-50 text-purple-700 border-purple-200',
+  intent_fixed: 'bg-violet-50 text-violet-700 border-violet-200',
+  contract_signed: 'bg-sky-50 text-sky-700 border-sky-200',
+  in_execution: 'bg-teal-50 text-teal-700 border-teal-200',
   approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   cancelled: 'bg-slate-100 text-slate-500 border-slate-200',
@@ -451,6 +512,13 @@ export function getDealById(id: string): DealCase | undefined {
 
 export function getAllDeals(): DealCase[] {
   return [...deals].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+}
+
+// Used by the messaging UI to surface the deal panel for a thread without
+// relying on `Thread.relatedDealId` (which is not yet populated server-side
+// while deals live in the in-memory store).
+export function getDealByThreadId(threadId: string): DealCase | undefined {
+  return deals.find((deal) => deal.threadId === threadId)
 }
 
 export function getDealsByBuyer(buyerId: string): DealCase[] {

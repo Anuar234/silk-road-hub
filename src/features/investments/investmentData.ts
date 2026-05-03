@@ -18,6 +18,8 @@ export type InvestmentProject = {
   tags: string[]
   createdAt: string
   updatedAt: string
+  /** ID пользователя-владельца. NULL/undefined для исторических записей или проектов Kazakh Invest, ведённых админом. */
+  createdBy?: string | null
 }
 
 export const INVESTMENT_STAGES: { id: InvestmentStage; name: string }[] = [

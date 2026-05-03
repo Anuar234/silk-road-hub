@@ -18,5 +18,7 @@ func RegisterRoutes(api *gin.RouterGroup, svc *Service, store *session.Store, cf
 		auth.POST("/logout", middleware.Auth(store), h.Logout)
 		auth.GET("/me", middleware.Auth(store), h.Me)
 		auth.PUT("/profile", middleware.Auth(store), h.UpdateProfile)
+		auth.POST("/verify-email", h.VerifyEmail)
+		auth.POST("/resend-verification", middleware.Auth(store), h.ResendVerification)
 	}
 }

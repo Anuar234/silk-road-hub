@@ -53,14 +53,19 @@ export function AppInvestorHomePage() {
           <CardContent className="flex flex-col gap-3 p-5 pt-0">
             <div className="flex items-center gap-2 text-sm text-slate-500">
               <Building2 className="size-4" />
-              Требуется верификация инициатора
+              Доступно после верификации инициатора
             </div>
             <p className="text-sm text-slate-600">
-              Разместите инвестиционный проект с документами и объёмом инвестиций. После верификации проект появится в публичном каталоге.
+              Заполните карточку проекта: описание, объём инвестиций, отрасль, регион. После размещения проект отправляется на верификацию и появляется в публичном каталоге.
             </p>
-            <Link to="/app/verification">
-              <Button variant="secondary" size="sm">Пройти верификацию</Button>
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/app/investments/new">
+                <Button variant="primary" size="sm">Разместить проект</Button>
+              </Link>
+              <Link to="/app/investments">
+                <Button variant="secondary" size="sm">Мои проекты</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -56,7 +56,13 @@ export function CatalogPage() {
           Товары и продавцы по секторам, категориям и странам. Все фильтры работают вместе и обновляют результат сразу.
         </p>
         <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-600">
-          <span className="rounded-full border border-border bg-white px-3 py-1.5">Сектор -&gt; подкатегория -&gt; страна</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1.5">
+            Сектор
+            <ChevronRight className="size-3 text-slate-400" />
+            подкатегория
+            <ChevronRight className="size-3 text-slate-400" />
+            страна
+          </span>
           <span className="rounded-full border border-border bg-white px-3 py-1.5">Товары и продавцы в одном потоке</span>
           <span className="rounded-full border border-border bg-white px-3 py-1.5">Фильтры сохраняются в URL</span>
         </div>

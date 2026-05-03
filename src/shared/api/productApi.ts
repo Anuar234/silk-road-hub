@@ -1,6 +1,21 @@
 import { apiGetCsrfToken } from '@shared/api/authApi'
 
-export type ProductStatus = 'draft' | 'moderation' | 'published' | 'rejected'
+export type ProductStatus =
+  | 'draft'
+  | 'moderation'
+  | 'published'
+  | 'rejected'
+  | 'in_negotiation'
+  | 'archived'
+
+export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
+  draft: 'Черновик',
+  moderation: 'На модерации',
+  published: 'Опубликовано',
+  rejected: 'Отклонено',
+  in_negotiation: 'В переговорах',
+  archived: 'Архивировано',
+}
 
 export type ServerProduct = {
   id: string
@@ -126,4 +141,25 @@ export async function apiSubmitProductForModeration(id: string): Promise<ServerP
   }
   const data = (await res.json()) as { ok: true; data: ServerProduct }
   return data.data
+}
+
+async function postProductAction(id: string, action: 'archive' | 'unarchive', errMsg: string): Promise<void> {
+  const headers = await csrfHeaders()
+  const res = await fetch(`/api/products/${id}/${action}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers,
+  })
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => ({}))) as { message?: string }
+    throw new Error(payload.message ?? errMsg)
+  }
+}
+
+export async function apiArchiveProduct(id: string): Promise<void> {
+  return postProductAction(id, 'archive', 'Не удалось архивировать товар.')
+}
+
+export async function apiUnarchiveProduct(id: string): Promise<void> {
+  return postProductAction(id, 'unarchive', 'Не удалось восстановить товар из архива.')
 }

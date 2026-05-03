@@ -17,6 +17,7 @@ type Project struct {
 	Tags         []string  `json:"tags" db:"tags"`
 	CreatedAt    time.Time `json:"createdAt" db:"created_at"`
 	UpdatedAt    time.Time `json:"updatedAt" db:"updated_at"`
+	CreatedBy    *string   `json:"createdBy,omitempty" db:"created_by"`
 }
 
 type CreateInput struct {

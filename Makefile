@@ -11,10 +11,11 @@ BACKEND_SVC  ?= backend
 
 .PHONY: help login link status deploy deploy-frontend deploy-backend \
         logs-frontend logs-backend vars-frontend vars-backend \
-        gen-secret open
+        gen-secret open \
+        backup backup-list restore
 
 help:
-	@echo "Targets:"
+	@echo "Railway:"
 	@echo "  login             Authenticate the Railway CLI"
 	@echo "  link              Link this repo to an existing Railway project"
 	@echo "  status            Show currently linked project + service"
@@ -27,6 +28,11 @@ help:
 	@echo "  vars-frontend     Print env vars of $(FRONTEND_SVC)"
 	@echo "  gen-secret        Print a random 48-byte base64 secret (for SRH_SESSION_SECRET)"
 	@echo "  open              Open the Railway project in a browser"
+	@echo
+	@echo "Backups (docker-compose):"
+	@echo "  backup            One-off pg_dump into the backup_data volume"
+	@echo "  backup-list       List archives currently stored in the volume"
+	@echo "  restore FILE=...  Restore from an archive (e.g. FILE=/backups/silkroadhub-...sql.gz)"
 
 login:
 	railway login
@@ -62,3 +68,23 @@ gen-secret:
 
 open:
 	railway open
+
+# --- Backup operations ---
+# Each target invokes the long-running `backup` service via `docker compose run`
+# with a one-shot override (no entrypoint loop, no detached lifetime). Files
+# land in the backup_data volume mounted at /backups inside the container.
+
+backup:
+	docker compose run --rm --no-deps -e BACKUP_INTERVAL_HOURS= backup /bin/sh /scripts/backup.sh
+
+backup-list:
+	docker compose run --rm --no-deps -e BACKUP_INTERVAL_HOURS= backup ls -lht /backups
+
+restore:
+	@if [ -z "$(FILE)" ]; then \
+		echo "Usage: make restore FILE=/backups/silkroadhub-YYYYMMDD-HHMMSS.sql.gz [CONFIRM=1]"; \
+		echo; \
+		$(MAKE) backup-list; \
+		exit 1; \
+	fi
+	docker compose run --rm --no-deps -e BACKUP_INTERVAL_HOURS= backup /bin/sh /scripts/restore.sh $(FILE) $(if $(CONFIRM),--confirm,)

@@ -83,7 +83,33 @@ services:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
 
+  # Daily pg_dump runner. Writes gzipped archives into the backup_data volume
+  # and rotates them by mtime (BACKUP_RETENTION_DAYS). Use `make backup` for
+  # an ad-hoc dump and `make restore FILE=...` to pull one back.
+  backup:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: srh
+      POSTGRES_DB: silkroadhub
+      BACKUP_DIR: /backups
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - backup_data:/backups
+      - ./scripts:/scripts:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["/bin/sh", "/scripts/backup.sh"]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
 volumes:
   pg_data:
   redis_data:
   upload_data:
+  backup_data:

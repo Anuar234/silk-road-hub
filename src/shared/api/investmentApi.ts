@@ -8,6 +8,15 @@ export async function apiGetInvestments(): Promise<InvestmentProject[]> {
   return data.data
 }
 
+// Returns only projects owned by the authenticated user. Backend gates this
+// route to investor and admin roles.
+export async function apiGetMyInvestments(): Promise<InvestmentProject[]> {
+  const res = await fetch('/api/investments/mine', { credentials: 'include' })
+  if (!res.ok) throw new Error('Не удалось загрузить ваши инвестпроекты.')
+  const data = (await res.json()) as { ok: true; data: InvestmentProject[] }
+  return data.data
+}
+
 export async function apiGetInvestment(id: string): Promise<InvestmentProject> {
   const res = await fetch(`/api/investments/${id}`, { credentials: 'include' })
   if (!res.ok) throw new Error('Инвестпроект не найден.')

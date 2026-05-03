@@ -11,7 +11,10 @@ func RegisterRoutes(api *gin.RouterGroup, pool *pgxpool.Pool, store *session.Sto
 	svc := NewService(pool)
 	h := NewHandler(svc)
 
-	admin := api.Group("/admin", middleware.Auth(store), middleware.RequireRole("admin"))
+	// ТЗ §4.4 — institutional partners (QazTrade and co.) read analytics
+	// alongside admins. Endpoints stay under /admin/ for URL stability; the
+	// allowed roles widen instead.
+	admin := api.Group("/admin", middleware.Auth(store), middleware.RequireRole("admin", "institutional"))
 	{
 		admin.GET("/dashboard", h.Dashboard)
 		admin.GET("/statistics", h.Statistics)

@@ -2,6 +2,7 @@ package investment
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -14,7 +15,16 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) Create(ctx context.Context, in *CreateInput) (*Project, error) {
+// Create persists a new investment project. Investors creating their own
+// project always end up as 'private' (Частный инвестиционный проект, ТЗ §5.11);
+// only admins (and Kazakh Invest curators acting through admin) can mark a
+// project as 'kazakh_invest'.
+func (s *Service) Create(ctx context.Context, in *CreateInput, role, ownerID string) (*Project, error) {
+	source := coalesce(in.Source, "private")
+	if role != "admin" && source == "kazakh_invest" {
+		return nil, fmt.Errorf("only admins can create Kazakh Invest projects")
+	}
+
 	p := &Project{
 		ID:           uuid.NewString(),
 		Title:        in.Title,
@@ -23,11 +33,14 @@ func (s *Service) Create(ctx context.Context, in *CreateInput) (*Project, error)
 		RegionCode:   in.RegionCode,
 		VolumeUSD:    in.VolumeUSD,
 		Stage:        coalesce(in.Stage, "concept"),
-		Source:       coalesce(in.Source, "private"),
+		Source:       source,
 		Initiator:    in.Initiator,
 		ContactEmail: in.ContactEmail,
 		DocumentIDs:  coalesceSlice(in.DocumentIDs),
 		Tags:         coalesceSlice(in.Tags),
+	}
+	if ownerID != "" {
+		p.CreatedBy = &ownerID
 	}
 	if err := s.repo.Create(ctx, p); err != nil {
 		return nil, err
@@ -43,7 +56,27 @@ func (s *Service) List(ctx context.Context) ([]*Project, error) {
 	return s.repo.List(ctx)
 }
 
-func (s *Service) Update(ctx context.Context, id string, in *UpdateInput) (*Project, error) {
+func (s *Service) ListByOwner(ctx context.Context, ownerID string) ([]*Project, error) {
+	return s.repo.ListByOwner(ctx, ownerID)
+}
+
+// Update applies partial changes to a project. Investors may only edit their
+// own projects, and may not promote them to 'kazakh_invest'. Admins can edit
+// any project including the source flag.
+func (s *Service) Update(ctx context.Context, id string, in *UpdateInput, role, userID string) (*Project, error) {
+	existing, err := s.repo.GetByID(ctx, id)
+	if err != nil || existing == nil {
+		return nil, fmt.Errorf("project not found")
+	}
+	if role != "admin" {
+		if existing.CreatedBy == nil || *existing.CreatedBy != userID {
+			return nil, fmt.Errorf("forbidden")
+		}
+		if in.Source != nil && *in.Source == "kazakh_invest" {
+			return nil, fmt.Errorf("only admins can set Kazakh Invest source")
+		}
+	}
+
 	sets := make(map[string]any)
 	if in.Title != nil {
 		sets["title"] = *in.Title

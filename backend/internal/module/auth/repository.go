@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -98,6 +99,88 @@ func (r *Repository) UpdateProfile(ctx context.Context, id string, updates *Prof
 	return nil
 }
 
+// CreateEmailVerificationToken stores a freshly minted token. Caller is
+// expected to invalidate any prior tokens for the same user separately when
+// re-issuing on resend.
+func (r *Repository) CreateEmailVerificationToken(ctx context.Context, token, userID string, expiresAt time.Time) error {
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO email_verification_tokens (token, user_id, expires_at)
+		VALUES ($1, $2, $3)`,
+		token, userID, expiresAt,
+	)
+	if err != nil {
+		return fmt.Errorf("create email verification token: %w", err)
+	}
+	return nil
+}
+
+// FindEmailVerificationToken returns the token row only if it exists, has not
+// been consumed, and has not expired.
+func (r *Repository) FindEmailVerificationToken(ctx context.Context, token string) (string, error) {
+	var userID string
+	err := r.pool.QueryRow(ctx, `
+		SELECT user_id FROM email_verification_tokens
+		WHERE token = $1
+		  AND consumed_at IS NULL
+		  AND expires_at > NOW()`,
+		token,
+	).Scan(&userID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return "", nil
+		}
+		return "", fmt.Errorf("find email verification token: %w", err)
+	}
+	return userID, nil
+}
+
+// ConsumeEmailVerificationTokenAndVerify atomically marks the token used and
+// flips the user's email_verified flag. Done in a transaction so a partial
+// failure cannot leave a token consumed without the user being verified.
+func (r *Repository) ConsumeEmailVerificationTokenAndVerify(ctx context.Context, token string) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	var userID string
+	err = tx.QueryRow(ctx, `
+		UPDATE email_verification_tokens SET consumed_at = NOW()
+		WHERE token = $1 AND consumed_at IS NULL AND expires_at > NOW()
+		RETURNING user_id`,
+		token,
+	).Scan(&userID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return fmt.Errorf("token invalid or expired")
+		}
+		return fmt.Errorf("consume token: %w", err)
+	}
+
+	if _, err := tx.Exec(ctx, `
+		UPDATE users SET email_verified = TRUE, updated_at = NOW()
+		WHERE id = $1`, userID,
+	); err != nil {
+		return fmt.Errorf("mark email verified: %w", err)
+	}
+
+	return tx.Commit(ctx)
+}
+
+// InvalidateUserVerificationTokens marks every outstanding token for the user
+// as consumed; called before re-issuing so only the latest token is usable.
+func (r *Repository) InvalidateUserVerificationTokens(ctx context.Context, userID string) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE email_verification_tokens SET consumed_at = NOW()
+		WHERE user_id = $1 AND consumed_at IS NULL`, userID,
+	)
+	if err != nil {
+		return fmt.Errorf("invalidate verification tokens: %w", err)
+	}
+	return nil
+}
+
 func (r *Repository) UpdateVerification(ctx context.Context, id string, status string) error {
 	verified := status == "verified"
 	_, err := r.pool.Exec(ctx, `
@@ -107,6 +190,18 @@ func (r *Repository) UpdateVerification(ctx context.Context, id string, status s
 		return fmt.Errorf("update verification: %w", err)
 	}
 	return nil
+}
+
+// GetRole returns the role of a user by ID. Used by other modules (e.g.
+// messaging) that need to validate a counterpart's role without pulling the
+// full user record. Returns ("", error) if no row exists.
+func (r *Repository) GetRole(ctx context.Context, userID string) (string, error) {
+	var role string
+	err := r.pool.QueryRow(ctx, `SELECT role FROM users WHERE id = $1`, userID).Scan(&role)
+	if err != nil {
+		return "", fmt.Errorf("get role: %w", err)
+	}
+	return role, nil
 }
 
 func (r *Repository) EmailExists(ctx context.Context, email string) (bool, error) {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileUp, CheckCircle, Clock } from 'lucide-react'
+import { FileUp, CheckCircle, Clock, Mail } from 'lucide-react'
 import { useAuth } from '@features/auth/auth'
 import { Container } from '@widgets/layout/Container'
 import { Button } from '@shared/ui/Button'
@@ -7,12 +7,27 @@ import { Card, CardContent, CardHeader } from '@shared/ui/Card'
 import { Badge } from '@shared/ui/Badge'
 import { uploadDealFile } from '@shared/api/fileApi'
 import { apiAddUserDoc } from '@shared/api/usersApi'
+import { apiResendVerification } from '@shared/api/authApi'
 
 export function VerificationPage() {
   const auth = useAuth()
   const [uploading, setUploading] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; fileId: string }[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [resendState, setResendState] = useState<'idle' | 'pending' | 'sent' | 'error'>('idle')
+  const [resendError, setResendError] = useState<string | null>(null)
+
+  const handleResend = async () => {
+    setResendState('pending')
+    setResendError(null)
+    try {
+      await apiResendVerification()
+      setResendState('sent')
+    } catch (e) {
+      setResendError(e instanceof Error ? e.message : 'Не удалось отправить ссылку.')
+      setResendState('error')
+    }
+  }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -41,6 +56,44 @@ export function VerificationPage() {
             Загрузите документы компании для прохождения проверки
           </p>
         </div>
+
+        <Card>
+          <CardHeader title="Подтверждение email" />
+          <CardContent className="grid gap-3">
+            <div className="flex items-center gap-3">
+              <Mail className="size-5 text-slate-500" />
+              {auth.emailVerified ? (
+                <Badge tone="success">Email подтверждён</Badge>
+              ) : (
+                <Badge tone="warning">Не подтверждён</Badge>
+              )}
+              <span className="text-sm text-slate-600">{auth.email}</span>
+            </div>
+            {!auth.emailVerified && (
+              <>
+                <p className="text-sm text-slate-600">
+                  Ссылка для подтверждения отправляется при регистрации. Если она не пришла или истекла,
+                  отправьте новую — она действует 24 часа.
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    variant="secondary"
+                    onClick={() => void handleResend()}
+                    disabled={resendState === 'pending'}
+                  >
+                    {resendState === 'pending' ? 'Отправляем…' : 'Отправить ссылку повторно'}
+                  </Button>
+                  {resendState === 'sent' && (
+                    <span className="text-sm text-emerald-700">Ссылка отправлена.</span>
+                  )}
+                  {resendState === 'error' && resendError && (
+                    <span role="alert" className="text-sm text-rose-600">{resendError}</span>
+                  )}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader title="Статус верификации" />

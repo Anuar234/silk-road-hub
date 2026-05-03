@@ -1,7 +1,9 @@
-import { Bell, Home, Mail, Package, Search, Settings, LogOut, ShoppingBag, ShieldAlert } from 'lucide-react'
+import { BarChart3, Bell, Building2, Home, Mail, Package, Search, Settings, LogOut, ShieldCheck, ShoppingBag, ShieldAlert } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth, type Role } from '@features/auth/auth'
+import { useT } from '@features/i18n/i18n'
+import { LocaleSwitcher } from '@features/i18n/LocaleSwitcher'
 import { cx } from '@shared/lib/cx'
 import { Button } from '@shared/ui/Button'
 import { Logo } from '@shared/ui/Logo'
@@ -9,30 +11,80 @@ import { getUnreadCountForAuth } from '@features/platform/platformSelectors'
 import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 import { MobileNavDrawer } from '@widgets/layout/MobileNavDrawer'
 
-const buyerSideItems = [
-  { to: '/app/home', label: 'Главная', icon: Home },
-  { to: '/app/catalog', label: 'Каталог', icon: Package },
-  { to: '/app/messages', label: 'Сообщения', icon: Mail },
-  { to: '/app/deals', label: 'Сделки', icon: ShoppingBag },
-  { to: '/app/settings', label: 'Настройки', icon: Settings },
-] as const
+type SideItem = { to: string; label: string; icon: typeof Home }
 
-const sellerSideItems = [
-  { to: '/app/home', label: 'Главная', icon: Home },
-  { to: '/app/catalog', label: 'Каталог', icon: Package },
-  { to: '/app/products', label: 'Товары', icon: Package },
-  { to: '/app/messages', label: 'Сообщения', icon: Mail },
-  { to: '/app/deals', label: 'Сделки', icon: ShoppingBag },
-  { to: '/app/settings', label: 'Настройки', icon: Settings },
-] as const
-
-function getRoleLabel(role: Role): string {
-  return role === 'seller' ? 'Продавец' : 'Покупатель'
+function buildBuyerSideItems(t: (key: string, fallback?: string) => string): SideItem[] {
+  return [
+    { to: '/app/home', label: t('app.home', 'Главная'), icon: Home },
+    { to: '/app/catalog', label: t('app.catalog', 'Каталог'), icon: Package },
+    { to: '/app/messages', label: t('app.messages', 'Сообщения'), icon: Mail },
+    { to: '/app/deals', label: t('app.deals', 'Сделки'), icon: ShoppingBag },
+    { to: '/app/settings', label: t('app.settings', 'Настройки'), icon: Settings },
+  ]
 }
 
-function getVerificationLabel(role: Role, verified: boolean, emailVerified: boolean): string {
-  if (role === 'seller') return verified ? 'Подтверждён' : 'На проверке'
-  return emailVerified ? 'Почта подтверждена' : 'Подтвердите почту'
+function buildSellerSideItems(t: (key: string, fallback?: string) => string): SideItem[] {
+  return [
+    { to: '/app/home', label: t('app.home', 'Главная'), icon: Home },
+    { to: '/app/catalog', label: t('app.catalog', 'Каталог'), icon: Package },
+    { to: '/app/products', label: t('app.products', 'Товары'), icon: Package },
+    { to: '/app/messages', label: t('app.messages', 'Сообщения'), icon: Mail },
+    { to: '/app/deals', label: t('app.deals', 'Сделки'), icon: ShoppingBag },
+    { to: '/app/settings', label: t('app.settings', 'Настройки'), icon: Settings },
+  ]
+}
+
+function buildInvestorSideItems(t: (key: string, fallback?: string) => string): SideItem[] {
+  return [
+    { to: '/app/home', label: t('app.home', 'Главная'), icon: Home },
+    { to: '/app/investments', label: t('app.investments', 'Мои проекты'), icon: Building2 },
+    { to: '/app/investment-requests', label: t('app.investmentRequests', 'Мои инвест-запросы'), icon: ShoppingBag },
+    { to: '/app/messages', label: t('app.messages', 'Сообщения'), icon: Mail },
+    { to: '/app/settings', label: t('app.settings', 'Настройки'), icon: Settings },
+  ]
+}
+
+function buildInstitutionalSideItems(t: (key: string, fallback?: string) => string): SideItem[] {
+  return [
+    { to: '/app/home', label: t('app.home', 'Главная'), icon: Home },
+    { to: '/app/institutional/verification', label: t('inst.verification', 'Верификации'), icon: ShieldCheck },
+    { to: '/app/institutional/deals', label: t('inst.deals', 'Сделки'), icon: ShoppingBag },
+    { to: '/app/institutional/investments', label: t('inst.investments', 'Инвестпроекты'), icon: Building2 },
+    { to: '/app/institutional/reports', label: t('inst.reports', 'Отчёты'), icon: BarChart3 },
+    { to: '/app/messages', label: t('app.messages', 'Сообщения'), icon: Mail },
+    { to: '/app/settings', label: t('app.settings', 'Настройки'), icon: Settings },
+  ]
+}
+
+function getRoleLabel(t: (key: string, fallback?: string) => string, role: Role): string {
+  switch (role) {
+    case 'seller':
+      return t('role.seller', 'Продавец')
+    case 'investor':
+      return t('role.investor', 'Инвестор')
+    case 'institutional':
+      return t('role.institutional', 'Институциональный пользователь')
+    case 'admin':
+      return t('role.admin', 'Администратор')
+    default:
+      return t('role.buyer', 'Покупатель')
+  }
+}
+
+function getVerificationLabel(
+  t: (key: string, fallback?: string) => string,
+  role: Role,
+  verified: boolean,
+  emailVerified: boolean,
+): string {
+  if (role === 'seller') {
+    return verified
+      ? t('verification.statusVerified', 'Подтверждён')
+      : t('verification.statusPending', 'На проверке')
+  }
+  return emailVerified
+    ? t('verification.emailConfirmed', 'Почта подтверждена')
+    : t('verification.emailUnverified', 'Почта не подтверждена')
 }
 
 export function AppLayout() {
@@ -40,9 +92,17 @@ export function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const version = usePlatformDataVersion()
+  const t = useT()
   const role = auth.role ?? 'buyer'
-  const sideItems = role === 'seller' ? sellerSideItems : buyerSideItems
-  const isBuyerUnverified = role === 'buyer' && !auth.emailVerified
+  const sideItems = useMemo(() => {
+    if (role === 'seller') return buildSellerSideItems(t)
+    if (role === 'investor') return buildInvestorSideItems(t)
+    if (role === 'institutional') return buildInstitutionalSideItems(t)
+    return buildBuyerSideItems(t)
+  }, [role, t])
+  // ТЗ §5.1 — show "email not confirmed" banner to every authenticated role
+  // until they click the link. Sellers used to be exempt; now they aren't.
+  const isEmailUnverified = !auth.emailVerified
   const unreadCount = useMemo(() => getUnreadCountForAuth(auth), [auth, version])
   const currentSearchQuery = useMemo(() => new URLSearchParams(location.search).get('q') ?? '', [location.search])
   const [searchValue, setSearchValue] = useState(currentSearchQuery)
@@ -84,7 +144,11 @@ export function AppLayout() {
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
                 className="h-11 w-full rounded-xl border border-border bg-white pl-9 pr-12 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
-                placeholder={role === 'seller' ? 'Поиск по каталогу и товарам…' : 'Поиск товаров в каталоге…'}
+                placeholder={
+                  role === 'seller'
+                    ? t('verification.searchPlaceholder.seller', 'Поиск по каталогу и товарам…')
+                    : t('verification.searchPlaceholder.buyer', 'Поиск товаров в каталоге…')
+                }
               />
               <button
                 type="submit"
@@ -100,8 +164,8 @@ export function AppLayout() {
             type="button"
             onClick={() => navigate('/app/messages')}
             className="relative grid size-11 place-items-center rounded-xl border border-border bg-white text-slate-700 motion-tap transition-[color,background-color] duration-[var(--duration-medium)] ease-[var(--ease-primary)] hover:bg-slate-50"
-            aria-label="Открыть сообщения"
-            title="Открыть сообщения"
+            aria-label={t('verification.notifications', 'Открыть сообщения')}
+            title={t('verification.notifications', 'Открыть сообщения')}
           >
             <Bell className="size-4" />
             {unreadCount > 0 && (
@@ -116,41 +180,47 @@ export function AppLayout() {
             onLogout={() => void auth.logout()}
             footer={
               <div className="rounded-lg border border-border bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                {getRoleLabel(role)} · {auth.displayName ?? auth.email ?? '—'}
+                {getRoleLabel(t, role)} · {auth.displayName ?? auth.email ?? '—'}
               </div>
             }
           />
 
           <div className="hidden items-center gap-3 sm:flex">
-            {isBuyerUnverified && (
+            {isEmailUnverified && (
               <div className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-800">
                 <ShieldAlert className="size-3.5" />
-                Почта не подтверждена
+                {t('verification.emailUnverified', 'Почта не подтверждена')}
               </div>
             )}
             <div className="text-right">
               <div className="text-sm font-semibold text-slate-900">
-                {getRoleLabel(role)} · {auth.displayName ?? auth.email ?? '—'}
+                {getRoleLabel(t, role)} · {auth.displayName ?? auth.email ?? '—'}
               </div>
               {(role === 'buyer' || role === 'seller') && (
                 <div className="text-xs text-slate-600">
-                  {getVerificationLabel(role, auth.verified, auth.emailVerified)}
+                  {getVerificationLabel(t, role, auth.verified, auth.emailVerified)}
                 </div>
               )}
             </div>
+            <LocaleSwitcher variant="compact" />
             <Button variant="ghost" size="sm" onClick={() => void auth.logout()} className="gap-2">
               <LogOut className="size-4" />
-              Выйти
+              {t('nav.logout', 'Выйти')}
             </Button>
           </div>
         </div>
       </header>
 
-      {isBuyerUnverified && (
+      {isEmailUnverified && (
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 pt-4 sm:hidden">
           <div className="flex w-full items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
             <ShieldAlert className="size-4 shrink-0" />
-            <span>Почта не подтверждена. <NavLink to="/app/verification" className="underline">Пройти верификацию</NavLink></span>
+            <span>
+              {t('verification.emailUnverified', 'Почта не подтверждена')}.{' '}
+              <NavLink to="/app/verification" className="underline">
+                {t('app.verification', 'Верификация')}
+              </NavLink>
+            </span>
           </div>
         </div>
       )}

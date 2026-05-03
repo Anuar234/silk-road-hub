@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader } from '@shared/ui/Card'
 import { Badge } from '@shared/ui/Badge'
 import { Button } from '@shared/ui/Button'
 import { ContractSection, LogisticsSection, PaymentSection, GuaranteesSection } from '@widgets/deal/DealSubSections'
+import { DealPhaseTracker } from '@widgets/deal/DealPhaseTracker'
 import { DealChat } from '@features/deals/DealChat'
+import { DealIntentsSection } from '@features/deals/DealIntentsSection'
 import { DealDocumentsRemote } from '@features/deals/DealDocumentsRemote'
 import { DealContractsRemote } from '@features/contracts/DealContractsRemote'
 import { DealLogisticsRemote } from '@features/logistics/DealLogisticsRemote'
@@ -77,6 +79,8 @@ export function AppDealDetailPage() {
         <h1 className="text-2xl font-bold text-slate-900">Сделка {deal.id}</h1>
         <Badge tone="neutral" className={DEAL_STATUS_TONE[deal.status]}>{DEAL_STATUS_LABELS[deal.status]}</Badge>
       </div>
+
+      <DealPhaseTracker status={deal.status} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -167,6 +171,13 @@ export function AppDealDetailPage() {
       <LogisticsSection dealId={deal.id} version={version} />
       <PaymentSection dealId={deal.id} version={version} />
       <GuaranteesSection dealId={deal.id} version={version} />
+
+      {/* LOI/MOU договорённости как сущность сделки (ТЗ §5.3) */}
+      <DealIntentsSection
+        dealId={deal.id}
+        canParticipate={auth.role === 'buyer' || auth.role === 'seller'}
+        signAs={amBuyerInDeal ? 'buyer' : 'seller'}
+      />
 
       {/* LOI/MOU documents and chat backed by Go API (ТЗ 5.3) */}
       <DealDocumentsRemote dealId={deal.id} />
