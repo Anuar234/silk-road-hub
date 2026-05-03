@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { buildFlashState } from '@shared/api/navigationState'
-import { FileText, Send, ShieldCheck, ShoppingBag } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FileText, MessageCircle, Send, ShieldCheck, ShoppingBag } from 'lucide-react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { uploadDealFile } from '@shared/api/fileApi'
 import { apiResendVerification } from '@shared/api/authApi'
 import {
@@ -74,6 +74,11 @@ export function AppMessagesPage() {
 
   const modalShellRef = useRef<HTMLDivElement | null>(null)
   const modalTriggerRef = useRef<HTMLElement | null>(null)
+  // Message UX refs — keep the chat scrolled to the latest message and let
+  // the textarea grow with content up to a sensible cap.
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const inputRef = useRef<HTMLTextAreaElement | null>(null)
+  const [messagesLoading, setMessagesLoading] = useState(false)
 
   const refreshThreads = useCallback(async () => {
     try {
@@ -121,9 +126,11 @@ export function AppMessagesPage() {
     if (!threadId) {
       setMessages([])
       setMessagesError(null)
+      setMessagesLoading(false)
       return
     }
     let cancelled = false
+    setMessagesLoading(true)
 
     const load = async (markRead: boolean) => {
       try {
@@ -140,6 +147,8 @@ export function AppMessagesPage() {
       } catch (e) {
         if (cancelled) return
         setMessagesError(e instanceof Error ? e.message : 'Не удалось загрузить сообщения.')
+      } finally {
+        if (!cancelled && markRead) setMessagesLoading(false)
       }
     }
     void load(true)
@@ -149,6 +158,19 @@ export function AppMessagesPage() {
       window.clearInterval(handle)
     }
   }, [threadId, refreshThreads])
+
+  // Stick the chat to the latest message whenever the list grows.
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' })
+  }, [messages.length, threadId])
+
+  // Auto-grow the message textarea up to ~6 lines, then internal scroll.
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`
+  }, [inputText])
 
   const currentThread = useMemo(
     () => (threadId ? threads.find((t) => t.id === threadId) ?? null : null),
@@ -359,39 +381,54 @@ export function AppMessagesPage() {
               const isActive = t.id === currentThread?.id
               const counterpartName = t.buyerId === auth.userId ? t.sellerName : t.buyerName
               const threadDeal = getDealByThreadId(t.id)
+              const unread = t.unreadCount > 0
+              const lastTime = t.lastMessageAt ?? t.updatedAt
               return (
                 <Link
                   key={t.id}
                   to={`/app/messages/${t.id}`}
                   className={cx(
-                    'block border-b border-border p-3 text-left transition-colors',
+                    'flex gap-3 border-b border-border p-3 text-left transition-colors',
                     isActive ? 'bg-brand-yellow-soft' : 'hover:bg-slate-50',
                   )}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-900">
-                      {t.productName ?? counterpartName ?? 'Диалог'}
+                  <div className="shrink-0">
+                    <span className="grid size-10 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">
+                      {initials(counterpartName ?? t.productName ?? 'Д')}
                     </span>
-                    {threadDeal && (
-                      <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium ${DEAL_STATUS_TONE[threadDeal.status]}`}>
-                        {DEAL_STATUS_LABELS[threadDeal.status]}
-                      </span>
-                    )}
-                    {t.unreadCount > 0 && (
-                      <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-brand-blue px-1.5 text-[10px] font-semibold text-white">
-                        {t.unreadCount > 9 ? '9+' : t.unreadCount}
-                      </span>
-                    )}
                   </div>
-                  <div className="text-xs text-slate-500">
-                    {t.buyerId === auth.userId ? `Продавец: ${t.sellerName ?? '—'}` : `Покупатель: ${t.buyerName ?? '—'}`}
-                  </div>
-                  {t.lastMessageBody && (
-                    <div className="mt-1 truncate text-sm text-slate-600">
-                      {t.lastMessageRole === 'system' ? '⚙ ' : t.lastMessageRole === 'admin' ? '👤 Админ: ' : ''}
-                      {t.lastMessageBody}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className={cx('truncate font-medium text-slate-900', unread && 'font-semibold')}>
+                        {t.productName ?? counterpartName ?? 'Диалог'}
+                      </span>
+                      <span className="ml-auto shrink-0 text-[11px] text-slate-500">
+                        {formatThreadTime(lastTime)}
+                      </span>
                     </div>
-                  )}
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500">
+                      <span className="truncate">
+                        {t.buyerId === auth.userId ? `Продавец: ${t.sellerName ?? '—'}` : `Покупатель: ${t.buyerName ?? '—'}`}
+                      </span>
+                      {threadDeal && (
+                        <span className={cx('shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium', DEAL_STATUS_TONE[threadDeal.status])}>
+                          {DEAL_STATUS_LABELS[threadDeal.status]}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className={cx('truncate text-sm', unread ? 'font-medium text-slate-900' : 'text-slate-600')}>
+                        {t.lastMessageBody
+                          ? `${t.lastMessageRole === 'system' ? '⚙ ' : t.lastMessageRole === 'admin' ? '👤 Админ: ' : ''}${t.lastMessageBody}`
+                          : <span className="italic text-slate-400">Сообщений ещё нет</span>}
+                      </span>
+                      {unread && (
+                        <span className="ml-auto inline-flex min-w-5 shrink-0 items-center justify-center rounded-full bg-brand-blue px-1.5 text-[10px] font-semibold text-white">
+                          {t.unreadCount > 9 ? '9+' : t.unreadCount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </Link>
               )
             })
@@ -588,60 +625,115 @@ export function AppMessagesPage() {
             )}
 
             {/* Messages */}
-            <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50/70 px-4 pt-4 pb-8">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50/70 px-4 pt-4 pb-6">
               {messagesError && (
                 <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                   {messagesError}
                 </div>
               )}
-              <div className="flex min-h-full flex-col justify-end gap-3">
-                {messages.map((m) => {
-                  if (m.isSystemMessage || m.senderRole === 'system') {
-                    return (
-                      <div key={m.id} className="flex justify-center">
-                        <div className="max-w-[80%] rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-xs text-slate-500 italic shadow-sm">
-                          {m.body}
-                          <div className="mt-0.5 text-[10px] text-slate-400">{new Date(m.createdAt).toLocaleString('ru-RU')}</div>
-                        </div>
-                      </div>
-                    )
+
+              {messagesLoading && messages.length === 0 ? (
+                <MessagesSkeleton />
+              ) : messages.length === 0 ? (
+                <EmptyThread
+                  counterpartName={
+                    amBuyerInThread
+                      ? currentThread.sellerName ?? 'продавцом'
+                      : currentThread.buyerName ?? 'покупателем'
                   }
-                  if (m.senderRole === 'admin') {
-                    return (
-                      <div key={m.id} className="flex justify-center">
-                        <div className="max-w-[82%] rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
-                          <div className="mb-0.5 text-[10px] font-semibold uppercase text-amber-600">Администратор</div>
-                          <p className="whitespace-pre-wrap">{m.body}</p>
-                          <p className="mt-1 text-xs text-amber-500">{new Date(m.createdAt).toLocaleString('ru-RU')}</p>
-                        </div>
-                      </div>
-                    )
-                  }
-                  const isMine = m.senderId === auth.userId
-                  return (
-                    <div key={m.id} className={isMine ? 'ml-8 flex justify-end' : 'mr-8'}>
-                      <div
-                        className={cx(
-                          'max-w-[82%] rounded-2xl px-4 py-3 text-sm shadow-sm ring-1 ring-black/5',
-                          isMine ? 'bg-brand-blue text-white' : 'border border-slate-200 bg-white text-slate-900',
-                        )}
-                      >
-                        <p className="whitespace-pre-wrap">{m.body}</p>
-                        <p className={cx('mt-1 text-xs', isMine ? 'text-blue-100' : 'text-slate-500')}>
-                          {new Date(m.createdAt).toLocaleString('ru-RU')}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+                />
+              ) : (
+                <div className="flex min-h-full flex-col justify-end gap-1.5">
+                  {(() => {
+                    let lastDayKey = ''
+                    let lastSenderId: string | null | undefined = undefined
+                    let lastIsSystem = false
+                    return messages.map((m) => {
+                      const created = new Date(m.createdAt)
+                      const dayKey = created.toDateString()
+                      const showDaySeparator = dayKey !== lastDayKey
+                      lastDayKey = dayKey
+
+                      const isSystem = m.isSystemMessage || m.senderRole === 'system'
+                      const isAdmin = m.senderRole === 'admin'
+                      const isMine = !isSystem && !isAdmin && m.senderId === auth.userId
+                      // Group consecutive messages from the same author with no
+                      // system message between them — only the first in a group
+                      // gets the avatar/name header.
+                      const continuation =
+                        !isSystem &&
+                        !isAdmin &&
+                        m.senderId === lastSenderId &&
+                        !lastIsSystem
+                      lastSenderId = isSystem || isAdmin ? null : m.senderId ?? null
+                      lastIsSystem = isSystem
+
+                      const senderName = isMine
+                        ? null
+                        : amBuyerInThread
+                          ? currentThread.sellerName ?? 'Продавец'
+                          : currentThread.buyerName ?? 'Покупатель'
+
+                      return (
+                        <Fragment key={m.id}>
+                          {showDaySeparator && <DaySeparator date={created} />}
+                          {isSystem ? (
+                            <div className="my-1 flex justify-center">
+                              <div className="max-w-[80%] rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-xs italic text-slate-500 shadow-sm">
+                                {m.body}
+                                <div className="mt-0.5 text-[10px] text-slate-400">{formatTimeShort(created)}</div>
+                              </div>
+                            </div>
+                          ) : isAdmin ? (
+                            <div className="my-1 flex justify-center">
+                              <div className="max-w-[82%] rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
+                                <div className="mb-0.5 text-[10px] font-semibold uppercase text-amber-600">Администратор</div>
+                                <p className="whitespace-pre-wrap">{m.body}</p>
+                                <p className="mt-1 text-xs text-amber-500">{formatTimeShort(created)}</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className={cx('flex items-end gap-2', isMine ? 'flex-row-reverse' : '', continuation ? 'mt-0.5' : 'mt-2')}>
+                              {!isMine && (
+                                <div className={cx('flex w-8 shrink-0 items-end justify-center', continuation && 'invisible')}>
+                                  <span className="grid size-8 place-items-center rounded-full bg-slate-200 text-[11px] font-semibold text-slate-700">
+                                    {initials(senderName)}
+                                  </span>
+                                </div>
+                              )}
+                              <div className={cx('flex max-w-[82%] flex-col', isMine ? 'items-end' : 'items-start')}>
+                                {!continuation && !isMine && senderName && (
+                                  <div className="mb-1 px-1 text-[11px] font-medium text-slate-500">{senderName}</div>
+                                )}
+                                <div
+                                  className={cx(
+                                    'rounded-2xl px-4 py-2.5 text-sm shadow-sm ring-1 ring-black/5',
+                                    isMine ? 'bg-brand-blue text-white' : 'border border-slate-200 bg-white text-slate-900',
+                                  )}
+                                >
+                                  <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                                  <p className={cx('mt-1 text-right text-[10px]', isMine ? 'text-blue-100' : 'text-slate-400')}>
+                                    {formatTimeShort(created)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </Fragment>
+                      )
+                    })
+                  })()}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
             </div>
 
             {/* Input */}
-            <div className="shrink-0 border-t border-border bg-white/95 p-4 shadow-[0_-10px_30px_-24px_rgba(15,23,42,0.45)] backdrop-blur">
-              <div className="flex gap-2">
-                <input
-                  type="text"
+            <div className="shrink-0 border-t border-border bg-white/95 p-3 shadow-[0_-10px_30px_-24px_rgba(15,23,42,0.45)] backdrop-blur sm:p-4">
+              <div className="flex items-end gap-2">
+                <textarea
+                  ref={inputRef}
+                  rows={1}
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => {
@@ -650,13 +742,19 @@ export function AppMessagesPage() {
                       void handleSend()
                     }
                   }}
-                  placeholder={canMessage ? 'Введите сообщение…' : 'Подтвердите почту, чтобы написать'}
-                  className="flex-1 rounded-xl border border-border px-4 py-2 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
+                  placeholder={canMessage ? 'Введите сообщение… (Shift+Enter — новая строка)' : 'Подтвердите почту, чтобы написать'}
+                  className="flex-1 resize-none rounded-xl border border-border px-4 py-2.5 text-sm leading-relaxed outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 disabled:opacity-60"
+                  style={{ maxHeight: 160 }}
                   disabled={!canMessage || sending}
                 />
-                <Button variant="primary" onClick={() => void handleSend()} disabled={!canMessage || !inputText.trim() || sending} className="gap-1">
+                <Button
+                  variant="primary"
+                  onClick={() => void handleSend()}
+                  disabled={!canMessage || !inputText.trim() || sending}
+                  className="shrink-0 gap-1"
+                >
                   <Send className="size-4" />
-                  {sending ? 'Отправка…' : 'Отправить'}
+                  <span className="hidden sm:inline">{sending ? 'Отправка…' : 'Отправить'}</span>
                 </Button>
               </div>
             </div>
@@ -685,6 +783,100 @@ export function AppMessagesPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Helpers and inline subcomponents for the messaging UI ──────────────────
+
+function initials(name?: string | null): string {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  return parts.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || '?'
+}
+
+function formatTimeShort(d: Date): string {
+  return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+}
+
+function formatDayLabel(d: Date): string {
+  const today = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(today.getDate() - 1)
+  if (d.toDateString() === today.toDateString()) return 'Сегодня'
+  if (d.toDateString() === yesterday.toDateString()) return 'Вчера'
+  const sameYear = today.getFullYear() === d.getFullYear()
+  return d.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: sameYear ? undefined : 'numeric',
+  })
+}
+
+function formatThreadTime(iso: string): string {
+  const d = new Date(iso)
+  const now = new Date()
+  const diffMs = now.getTime() - d.getTime()
+  if (diffMs < 60_000) return 'только что'
+  if (diffMs < 3_600_000) return `${Math.floor(diffMs / 60_000)} мин назад`
+  const today = now.toDateString() === d.toDateString()
+  if (today) return formatTimeShort(d)
+  const yesterday = new Date()
+  yesterday.setDate(now.getDate() - 1)
+  if (yesterday.toDateString() === d.toDateString()) return 'вчера'
+  const sameYear = now.getFullYear() === d.getFullYear()
+  return d.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    year: sameYear ? undefined : '2-digit',
+  })
+}
+
+function DaySeparator({ date }: { date: Date }) {
+  return (
+    <div className="my-3 flex items-center gap-3">
+      <div className="h-px flex-1 bg-slate-200" />
+      <span className="rounded-full bg-white px-3 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200">
+        {formatDayLabel(date)}
+      </span>
+      <div className="h-px flex-1 bg-slate-200" />
+    </div>
+  )
+}
+
+function MessagesSkeleton() {
+  return (
+    <div className="flex flex-col gap-3 pt-4">
+      {[0, 1, 2].map((i) => {
+        const right = i % 2 === 1
+        return (
+          <div key={i} className={right ? 'flex justify-end' : 'flex items-end gap-2'}>
+            {!right && <div className="size-8 shrink-0 rounded-full bg-slate-200" />}
+            <div
+              className={`h-12 w-[60%] animate-pulse rounded-2xl ${
+                right ? 'bg-brand-blue/30' : 'bg-slate-200'
+              }`}
+            />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function EmptyThread({ counterpartName }: { counterpartName: string }) {
+  return (
+    <div className="flex h-full items-center justify-center px-6 text-center">
+      <div className="max-w-sm">
+        <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-brand-blue/10 text-brand-blue">
+          <MessageCircle className="size-6" />
+        </div>
+        <p className="mt-3 text-sm font-medium text-slate-900">Начните диалог с {counterpartName}</p>
+        <p className="mt-1 text-sm text-slate-600">
+          Опишите, что вас интересует — собеседник увидит сообщение, как только обновит чат.
+        </p>
+      </div>
     </div>
   )
 }
