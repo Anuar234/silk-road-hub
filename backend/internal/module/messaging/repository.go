@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -125,20 +126,26 @@ func (r *Repository) ListForUser(ctx context.Context, userID string) ([]*Thread,
 	for rows.Next() {
 		var t Thread
 		var bodyPtr *string
-		var createdAtPtr *string
+		// pgx returns timestamptz in binary format and refuses to scan it into
+		// a string. Read into time.Time then format to RFC3339 for the JSON
+		// payload (LastMessageAt is *string for backwards compatibility).
+		var createdAtTime *time.Time
 		var rolePtr *string
 		if err := rows.Scan(
 			&t.ID, &t.BuyerID, &t.SellerID, &t.ProductID, &t.RelatedDealID,
 			&t.CreatedAt, &t.UpdatedAt,
 			&t.BuyerName, &t.SellerName,
 			&t.ProductName, &t.ProductSlug,
-			&bodyPtr, &createdAtPtr, &rolePtr,
+			&bodyPtr, &createdAtTime, &rolePtr,
 			&t.UnreadCount,
 		); err != nil {
 			return nil, fmt.Errorf("scan thread: %w", err)
 		}
 		t.LastMessageBody = bodyPtr
-		t.LastMessageAt = createdAtPtr
+		if createdAtTime != nil {
+			s := createdAtTime.Format(time.RFC3339)
+			t.LastMessageAt = &s
+		}
 		t.LastMessageRole = rolePtr
 		threads = append(threads, &t)
 	}
