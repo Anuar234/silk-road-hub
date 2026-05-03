@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from '@shared/ui/Card'
 import { Badge } from '@shared/ui/Badge'
 import { Button } from '@shared/ui/Button'
 import { useAuth } from '@features/auth/auth'
+import { useT } from '@features/i18n/i18n'
 import { getDealProduct, DEAL_STATUS_LABELS, DEAL_STATUS_TONE } from '@features/deals/dealData'
 import { products } from '@mocks/mockData'
 import { appProducts } from '@mocks/appMockData'
@@ -36,7 +37,7 @@ function BuyerDashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Кабинет покупателя</h1>
+      <h1 className="text-2xl font-bold text-slate-900">{useT()('home.buyer.title', 'Кабинет покупателя')}</h1>
 
       <Card className="border-brand-blue/10 bg-gradient-to-br from-white to-brand-blue/5">
         <CardContent className="flex flex-col gap-3 py-5 lg:flex-row lg:items-center lg:justify-between">
@@ -129,7 +130,7 @@ function SellerDashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Кабинет продавца</h1>
+      <h1 className="text-2xl font-bold text-slate-900">{useT()('home.seller.title', 'Кабинет продавца')}</h1>
 
       <Card className="border-brand-blue/10 bg-gradient-to-br from-white to-brand-blue/5">
         <CardContent className="flex flex-col gap-3 py-5 lg:flex-row lg:items-center lg:justify-between">

@@ -18,6 +18,7 @@ import { Container } from '@widgets/layout/Container'
 import { Card, CardContent } from '@shared/ui/Card'
 import { cx } from '@shared/lib/cx'
 import { useAuth } from '@features/auth/auth'
+import { useT } from '@features/i18n/i18n'
 
 const SLIDE_INTERVAL_MS = 10_000
 
@@ -313,33 +314,32 @@ export function LandingPage() {
 
 function HeroBanner() {
   const auth = useAuth()
+  const t = useT()
   const isAuth = auth.isAuthenticated
 
   // Primary CTAs adapt to auth state. Anonymous visitors see registration as
   // the conversion path; logged-in users see a direct shortcut to their cabinet.
   const primaryCta = isAuth
-    ? { to: '/app/home', label: 'В кабинет' }
-    : { to: '/register', label: 'Создать аккаунт' }
+    ? { to: '/app/home', label: t('landing.hero.primary.auth', 'В кабинет') }
+    : { to: '/register', label: t('landing.hero.primary.unauth', 'Создать аккаунт') }
   const secondaryCta = isAuth
-    ? { to: '/catalog', label: 'Открыть каталог' }
-    : { to: '/login', label: 'Войти' }
+    ? { to: '/catalog', label: t('landing.hero.secondary.auth', 'Открыть каталог') }
+    : { to: '/login', label: t('landing.hero.secondary.unauth', 'Войти') }
 
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[1.1fr_0.9fr]">
       <div className="flex flex-col gap-6">
         <div className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-white/80 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-600 backdrop-blur-sm">
           <Globe2 className="size-3.5 text-brand-blue" />
-          Silk Road Hub · B2B-платформа экспорта
+          {t('landing.hero.tag', 'Silk Road Hub · B2B-платформа экспорта')}
         </div>
 
         <h1 className="text-balance text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-          Цифровой коридор экспорта Казахстана
+          {t('landing.hero.title', 'Цифровой коридор экспорта Казахстана')}
         </h1>
 
         <p className="max-w-2xl text-pretty text-base text-slate-600 sm:text-lg">
-          Сквозное сопровождение экспортных сделок и инвестиционных проектов: каталог товаров,
-          переговоры, контракты, логистика и гарантии — в одном цифровом контуре с поддержкой
-          QazTrade, KazakhExport и Kazakh Invest.
+          {t('landing.hero.subtitle', 'Сквозное сопровождение экспортных сделок и инвестиционных проектов…')}
         </p>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -360,42 +360,42 @@ function HeroBanner() {
             to="/investments"
             className="inline-flex items-center gap-1.5 rounded-xl px-3 py-3 text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-brand-blue"
           >
-            Инвестпроекты
+            {t('landing.hero.tertiary', 'Инвестпроекты')}
             <ArrowRight className="size-3.5" />
           </Link>
         </div>
 
         <div className="flex flex-wrap gap-x-5 gap-y-2 text-[12px] text-slate-600">
-          <TrustDot>Доступ по верификации компании</TrustDot>
-          <TrustDot>4 языка интерфейса</TrustDot>
-          <TrustDot>Сделки от заявки до контракта</TrustDot>
+          <TrustDot>{t('landing.hero.trust.verification', 'Доступ по верификации компании')}</TrustDot>
+          <TrustDot>{t('landing.hero.trust.languages', '4 языка интерфейса')}</TrustDot>
+          <TrustDot>{t('landing.hero.trust.deals', 'Сделки от заявки до контракта')}</TrustDot>
         </div>
       </div>
 
       <div className="rounded-3xl border border-border bg-white/85 p-5 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:p-6">
         <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-          Что входит в платформу
+          {t('landing.hero.features.title', 'Что входит в платформу')}
         </div>
         <ul className="mt-4 grid gap-3">
           <HeroFeature
             icon={<ShoppingBag className="size-4" />}
-            title="Каталог товаров"
-            description="Сектора, страны, регионы РК. Все фильтры одновременно."
+            title={t('landing.hero.features.catalog.title', 'Каталог товаров')}
+            description={t('landing.hero.features.catalog.desc', 'Сектора, страны, регионы РК.')}
           />
           <HeroFeature
             icon={<Building2 className="size-4" />}
-            title="Инвестиционные проекты"
-            description="Kazakh Invest, ГЧП и частные инициативы с верифицированными инициаторами."
+            title={t('landing.hero.features.invest.title', 'Инвестиционные проекты')}
+            description={t('landing.hero.features.invest.desc', 'Kazakh Invest, ГЧП и частные инициативы.')}
           />
           <HeroFeature
             icon={<TrendingUp className="size-4" />}
-            title="Сделки с историей"
-            description="Переговоры, документы, статусы — в одной карточке от первого контакта до подписания."
+            title={t('landing.hero.features.deals.title', 'Сделки с историей')}
+            description={t('landing.hero.features.deals.desc', 'Переговоры, документы, статусы.')}
           />
           <HeroFeature
             icon={<ShieldCheck className="size-4" />}
-            title="Институциональная поддержка"
-            description="Гарантии KazakhExport и сопровождение Kazakh Invest подключаются к сделке."
+            title={t('landing.hero.features.support.title', 'Институциональная поддержка')}
+            description={t('landing.hero.features.support.desc', 'Гарантии KazakhExport и сопровождение Kazakh Invest.')}
           />
         </ul>
       </div>
@@ -418,35 +418,36 @@ function HeroFeature({ icon, title, description }: { icon: React.ReactNode; titl
 }
 
 function RolePillars() {
+  const t = useT()
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <RoleCard
         accent="bg-brand-blue/10 text-brand-blue"
         icon={<ShoppingBag className="size-5" />}
-        title="Покупателю"
-        description="Найдите проверенных поставщиков из РК и СНГ. Ведите переписку и сделку до контракта."
-        cta={{ to: '/catalog', label: 'Открыть каталог' }}
+        title={t('landing.pillar.buyer.title', 'Покупателю')}
+        description={t('landing.pillar.buyer.desc', 'Найдите проверенных поставщиков.')}
+        cta={{ to: '/catalog', label: t('landing.pillar.buyer.cta', 'Открыть каталог') }}
       />
       <RoleCard
         accent="bg-emerald-100 text-emerald-700"
         icon={<TrendingUp className="size-5" />}
-        title="Экспортёру"
-        description="Разместите товары, принимайте запросы и ведите все сделки в одном месте."
-        cta={{ to: '/register', label: 'Стать продавцом' }}
+        title={t('landing.pillar.seller.title', 'Экспортёру')}
+        description={t('landing.pillar.seller.desc', 'Разместите товары и ведите сделки.')}
+        cta={{ to: '/register', label: t('landing.pillar.seller.cta', 'Стать продавцом') }}
       />
       <RoleCard
         accent="bg-amber-100 text-amber-700"
         icon={<Building2 className="size-5" />}
-        title="Инвестору"
-        description="Изучайте проекты Kazakh Invest и частные инициативы. Размещайте собственные."
-        cta={{ to: '/investments', label: 'Каталог проектов' }}
+        title={t('landing.pillar.investor.title', 'Инвестору')}
+        description={t('landing.pillar.investor.desc', 'Kazakh Invest и частные инициативы.')}
+        cta={{ to: '/investments', label: t('landing.pillar.investor.cta', 'Каталог проектов') }}
       />
       <RoleCard
         accent="bg-slate-100 text-slate-700"
         icon={<ShieldCheck className="size-5" />}
-        title="Институциональным партнёрам"
-        description="Мониторинг сделок, аналитика и отчётность для QazTrade, KazakhExport, Kazakh Invest."
-        cta={{ to: '/about', label: 'О платформе' }}
+        title={t('landing.pillar.inst.title', 'Институциональным партнёрам')}
+        description={t('landing.pillar.inst.desc', 'Мониторинг и аналитика.')}
+        cta={{ to: '/about', label: t('landing.pillar.inst.cta', 'О платформе') }}
       />
     </div>
   )

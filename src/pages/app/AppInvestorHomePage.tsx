@@ -2,12 +2,13 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Building2, FileSearch, TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@shared/ui/Card'
 import { Button } from '@shared/ui/Button'
+import { useT } from '@features/i18n/i18n'
 
 export function AppInvestorHomePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Кабинет инвестора</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{useT()('home.investor.title', 'Кабинет инвестора')}</h1>
         <p className="mt-1 text-sm text-slate-600">
           Размещайте инвестиционные проекты, изучайте каталог частных и государственных инициатив, направляйте инвест-запросы.
         </p>

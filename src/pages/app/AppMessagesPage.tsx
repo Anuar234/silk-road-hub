@@ -18,6 +18,7 @@ import { Badge } from '@shared/ui/Badge'
 import { Input } from '@shared/ui/Input'
 import { Textarea } from '@shared/ui/Textarea'
 import { useAuth } from '@features/auth/auth'
+import { useT } from '@features/i18n/i18n'
 import { cx } from '@shared/lib/cx'
 import { DealModal } from '@widgets/deal/DealModal'
 import {
@@ -48,6 +49,7 @@ export function AppMessagesPage() {
   const auth = useAuth()
   const navigate = useNavigate()
   const version = usePlatformDataVersion()
+  const t = useT()
 
   const isBuyerRole = auth.role === 'buyer'
   const canMessage = isBuyerRole ? auth.emailVerified : true
@@ -358,7 +360,7 @@ export function AppMessagesPage() {
       {/* Thread list */}
       <div className="w-full shrink-0 rounded-2xl border border-border bg-white lg:w-80">
         <div className="border-b border-border p-3">
-          <h2 className="text-base font-semibold text-slate-900">Сообщения</h2>
+          <h2 className="text-base font-semibold text-slate-900">{t('chat.title', 'Сообщения')}</h2>
         </div>
         <div className="max-h-[280px] overflow-y-auto lg:max-h-[calc(100vh-14rem)]">
           {threadsError && (
@@ -369,24 +371,24 @@ export function AppMessagesPage() {
           {!threadsError && threads.length === 0 ? (
             <div className="p-4">
               <div className="rounded-2xl border border-dashed border-border bg-slate-50 p-4 text-sm text-slate-500">
-                <div className="font-medium text-slate-900">Пока нет диалогов</div>
-                <div className="mt-1">Откройте каталог, выберите товар и нажмите «Написать продавцу», чтобы начать переписку.</div>
+                <div className="font-medium text-slate-900">{t('chat.list.empty.title', 'Пока нет диалогов')}</div>
+                <div className="mt-1">{t('chat.list.empty.hint', 'Откройте каталог и нажмите «Написать продавцу».')}</div>
                 <Link to="/app/catalog">
-                  <Button variant="secondary" size="sm" className="mt-3">Перейти в каталог</Button>
+                  <Button variant="secondary" size="sm" className="mt-3">{t('chat.list.empty.cta', 'Перейти в каталог')}</Button>
                 </Link>
               </div>
             </div>
           ) : (
-            threads.map((t) => {
-              const isActive = t.id === currentThread?.id
-              const counterpartName = t.buyerId === auth.userId ? t.sellerName : t.buyerName
-              const threadDeal = getDealByThreadId(t.id)
-              const unread = t.unreadCount > 0
-              const lastTime = t.lastMessageAt ?? t.updatedAt
+            threads.map((thread) => {
+              const isActive = thread.id === currentThread?.id
+              const counterpartName = thread.buyerId === auth.userId ? thread.sellerName : thread.buyerName
+              const threadDeal = getDealByThreadId(thread.id)
+              const unread = thread.unreadCount > 0
+              const lastTime = thread.lastMessageAt ?? thread.updatedAt
               return (
                 <Link
-                  key={t.id}
-                  to={`/app/messages/${t.id}`}
+                  key={thread.id}
+                  to={`/app/messages/${thread.id}`}
                   className={cx(
                     'flex gap-3 border-b border-border p-3 text-left transition-colors',
                     isActive ? 'bg-brand-yellow-soft' : 'hover:bg-slate-50',
@@ -394,21 +396,21 @@ export function AppMessagesPage() {
                 >
                   <div className="shrink-0">
                     <span className="grid size-10 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">
-                      {initials(counterpartName ?? t.productName ?? 'Д')}
+                      {initials(counterpartName ?? thread.productName ?? 'Д')}
                     </span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className={cx('truncate font-medium text-slate-900', unread && 'font-semibold')}>
-                        {t.productName ?? counterpartName ?? 'Диалог'}
+                        {thread.productName ?? counterpartName ?? 'Диалог'}
                       </span>
                       <span className="ml-auto shrink-0 text-[11px] text-slate-500">
-                        {formatThreadTime(lastTime)}
+                        {formatThreadTime(lastTime, t)}
                       </span>
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500">
                       <span className="truncate">
-                        {t.buyerId === auth.userId ? `Продавец: ${t.sellerName ?? '—'}` : `Покупатель: ${t.buyerName ?? '—'}`}
+                        {thread.buyerId === auth.userId ? `Продавец: ${thread.sellerName ?? '—'}` : `Покупатель: ${thread.buyerName ?? '—'}`}
                       </span>
                       {threadDeal && (
                         <span className={cx('shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium', DEAL_STATUS_TONE[threadDeal.status])}>
@@ -418,13 +420,13 @@ export function AppMessagesPage() {
                     </div>
                     <div className="mt-1 flex items-center gap-2">
                       <span className={cx('truncate text-sm', unread ? 'font-medium text-slate-900' : 'text-slate-600')}>
-                        {t.lastMessageBody
-                          ? `${t.lastMessageRole === 'system' ? '⚙ ' : t.lastMessageRole === 'admin' ? '👤 Админ: ' : ''}${t.lastMessageBody}`
-                          : <span className="italic text-slate-400">Сообщений ещё нет</span>}
+                        {thread.lastMessageBody
+                          ? `${thread.lastMessageRole === 'system' ? '⚙ ' : thread.lastMessageRole === 'admin' ? '👤 Админ: ' : ''}${thread.lastMessageBody}`
+                          : <span className="italic text-slate-400">{t('chat.list.preview.empty', 'Сообщений ещё нет')}</span>}
                       </span>
                       {unread && (
                         <span className="ml-auto inline-flex min-w-5 shrink-0 items-center justify-center rounded-full bg-brand-blue px-1.5 text-[10px] font-semibold text-white">
-                          {t.unreadCount > 9 ? '9+' : t.unreadCount}
+                          {thread.unreadCount > 9 ? '9+' : thread.unreadCount}
                         </span>
                       )}
                     </div>
@@ -445,7 +447,7 @@ export function AppMessagesPage() {
         )}
         {!currentThread ? (
           <div className="flex flex-1 items-center justify-center p-8 text-center text-slate-500">
-            Выберите диалог или откройте товар в каталоге и нажмите «Написать продавцу».
+            {t('chat.placeholder.empty', 'Выберите диалог или откройте товар в каталоге и нажмите «Написать продавцу».')}
           </div>
         ) : (
           <>
@@ -636,10 +638,11 @@ export function AppMessagesPage() {
                 <MessagesSkeleton />
               ) : messages.length === 0 ? (
                 <EmptyThread
+                  t={t}
                   counterpartName={
                     amBuyerInThread
-                      ? currentThread.sellerName ?? 'продавцом'
-                      : currentThread.buyerName ?? 'покупателем'
+                      ? currentThread.sellerName ?? t('chat.empty.fallbackSeller', 'продавцом')
+                      : currentThread.buyerName ?? t('chat.empty.fallbackBuyer', 'покупателем')
                   }
                 />
               ) : (
@@ -676,7 +679,7 @@ export function AppMessagesPage() {
 
                       return (
                         <Fragment key={m.id}>
-                          {showDaySeparator && <DaySeparator date={created} />}
+                          {showDaySeparator && <DaySeparator date={created} t={t} />}
                           {isSystem ? (
                             <div className="my-1 flex justify-center">
                               <div className="max-w-[80%] rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-xs italic text-slate-500 shadow-sm">
@@ -742,7 +745,7 @@ export function AppMessagesPage() {
                       void handleSend()
                     }
                   }}
-                  placeholder={canMessage ? 'Введите сообщение… (Shift+Enter — новая строка)' : 'Подтвердите почту, чтобы написать'}
+                  placeholder={canMessage ? t('chat.placeholder', 'Введите сообщение… (Shift+Enter — новая строка)') : t('chat.placeholder.gated', 'Подтвердите почту, чтобы написать')}
                   className="flex-1 resize-none rounded-xl border border-border px-4 py-2.5 text-sm leading-relaxed outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 disabled:opacity-60"
                   style={{ maxHeight: 160 }}
                   disabled={!canMessage || sending}
@@ -754,7 +757,7 @@ export function AppMessagesPage() {
                   className="shrink-0 gap-1"
                 >
                   <Send className="size-4" />
-                  <span className="hidden sm:inline">{sending ? 'Отправка…' : 'Отправить'}</span>
+                  <span className="hidden sm:inline">{sending ? t('chat.sending', 'Отправка…') : t('chat.send', 'Отправить')}</span>
                 </Button>
               </div>
             </div>
@@ -800,12 +803,12 @@ function formatTimeShort(d: Date): string {
   return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
 }
 
-function formatDayLabel(d: Date): string {
+function formatDayLabel(d: Date, t: (key: string, fallback?: string) => string): string {
   const today = new Date()
   const yesterday = new Date()
   yesterday.setDate(today.getDate() - 1)
-  if (d.toDateString() === today.toDateString()) return 'Сегодня'
-  if (d.toDateString() === yesterday.toDateString()) return 'Вчера'
+  if (d.toDateString() === today.toDateString()) return t('chat.day.today', 'Сегодня')
+  if (d.toDateString() === yesterday.toDateString()) return t('chat.day.yesterday', 'Вчера')
   const sameYear = today.getFullYear() === d.getFullYear()
   return d.toLocaleDateString('ru-RU', {
     day: 'numeric',
@@ -814,17 +817,17 @@ function formatDayLabel(d: Date): string {
   })
 }
 
-function formatThreadTime(iso: string): string {
+function formatThreadTime(iso: string, t: (key: string, fallback?: string) => string): string {
   const d = new Date(iso)
   const now = new Date()
   const diffMs = now.getTime() - d.getTime()
-  if (diffMs < 60_000) return 'только что'
-  if (diffMs < 3_600_000) return `${Math.floor(diffMs / 60_000)} мин назад`
+  if (diffMs < 60_000) return t('chat.relative.justNow', 'только что')
+  if (diffMs < 3_600_000) return `${Math.floor(diffMs / 60_000)} ${t('chat.relative.minutesAgo', 'мин назад')}`
   const today = now.toDateString() === d.toDateString()
   if (today) return formatTimeShort(d)
   const yesterday = new Date()
   yesterday.setDate(now.getDate() - 1)
-  if (yesterday.toDateString() === d.toDateString()) return 'вчера'
+  if (yesterday.toDateString() === d.toDateString()) return t('chat.relative.yesterday', 'вчера')
   const sameYear = now.getFullYear() === d.getFullYear()
   return d.toLocaleDateString('ru-RU', {
     day: 'numeric',
@@ -833,12 +836,12 @@ function formatThreadTime(iso: string): string {
   })
 }
 
-function DaySeparator({ date }: { date: Date }) {
+function DaySeparator({ date, t }: { date: Date; t: (key: string, fallback?: string) => string }) {
   return (
     <div className="my-3 flex items-center gap-3">
       <div className="h-px flex-1 bg-slate-200" />
       <span className="rounded-full bg-white px-3 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200">
-        {formatDayLabel(date)}
+        {formatDayLabel(date, t)}
       </span>
       <div className="h-px flex-1 bg-slate-200" />
     </div>
@@ -865,16 +868,24 @@ function MessagesSkeleton() {
   )
 }
 
-function EmptyThread({ counterpartName }: { counterpartName: string }) {
+function EmptyThread({
+  counterpartName,
+  t,
+}: {
+  counterpartName: string
+  t: (key: string, fallback?: string) => string
+}) {
   return (
     <div className="flex h-full items-center justify-center px-6 text-center">
       <div className="max-w-sm">
         <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-brand-blue/10 text-brand-blue">
           <MessageCircle className="size-6" />
         </div>
-        <p className="mt-3 text-sm font-medium text-slate-900">Начните диалог с {counterpartName}</p>
+        <p className="mt-3 text-sm font-medium text-slate-900">
+          {t('chat.empty.title', 'Начните диалог с')} {counterpartName}
+        </p>
         <p className="mt-1 text-sm text-slate-600">
-          Опишите, что вас интересует — собеседник увидит сообщение, как только обновит чат.
+          {t('chat.empty.hint', 'Опишите, что вас интересует — собеседник увидит сообщение, как только обновит чат.')}
         </p>
       </div>
     </div>

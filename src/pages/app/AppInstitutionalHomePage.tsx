@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from '@shared/ui/Card'
 import { apiGetInvestments } from '@shared/api/investmentApi'
 import { apiGetUsers } from '@shared/api/usersApi'
 import { dealPhase, getAllDeals, type DealPhase } from '@features/deals/dealData'
+import { useT } from '@features/i18n/i18n'
 import { usePlatformDataVersion } from '@shared/hooks/usePlatformDataVersion'
 import type { ApiUser } from '@shared/api/authApi'
 import type { InvestmentProject } from '@features/investments/investmentData'
@@ -62,7 +63,7 @@ export function AppInstitutionalHomePage() {
   return (
     <div className="space-y-6 py-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Кабинет институционального пользователя</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{useT()('home.institutional.title', 'Кабинет институционального пользователя')}</h1>
         <p className="mt-1 text-sm text-slate-600">
           Мониторинг и верификация для QazTrade, KazakhExport, Kazakh Invest и партнёров. Доступ предоставляется
           администратором платформы.
