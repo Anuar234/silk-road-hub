@@ -79,6 +79,10 @@ type ListFilter struct {
 	BuyerID  string
 	SellerID string // when set, return only RFQs the seller is matched to
 	Status   string // optional
+	// ActiveOnly excludes terminal statuses ('fulfilled', 'closed') from the
+	// result. Used by the seller marketplace view so they don't see RFQs that
+	// already have a deal or were withdrawn.
+	ActiveOnly bool
 }
 
 func (r *Repository) List(ctx context.Context, f ListFilter) ([]*Rfq, error) {
@@ -100,6 +104,9 @@ func (r *Repository) List(ctx context.Context, f ListFilter) ([]*Rfq, error) {
 	}
 	if f.Status != "" {
 		query = query.Where(sq.Eq{"r.status": f.Status})
+	}
+	if f.ActiveOnly {
+		query = query.Where(sq.NotEq{"r.status": []string{StatusFulfilled, StatusClosed}})
 	}
 
 	sql, args, err := query.ToSql()

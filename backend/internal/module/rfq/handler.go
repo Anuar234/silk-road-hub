@@ -53,6 +53,11 @@ func canSee(role, userID string, r *Rfq) bool {
 	case "buyer":
 		return r.BuyerID == userID
 	case "seller":
+		// Sellers browse all active RFQs as a marketplace; closed/fulfilled
+		// rows are only visible to them if they were curated as a match.
+		if r.Status != "fulfilled" && r.Status != "closed" {
+			return true
+		}
 		for _, m := range r.Matches {
 			if m.SellerID == userID {
 				return true

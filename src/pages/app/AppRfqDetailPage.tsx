@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Building2, MessageCircle, Plus, Trash2, X } from 'lucide-react'
 import { Container } from '@widgets/layout/Container'
+import { apiOpenThread } from '@shared/api/messagingApi'
 import { Badge } from '@shared/ui/Badge'
 import { Button } from '@shared/ui/Button'
 import { Card, CardContent, CardHeader } from '@shared/ui/Card'
@@ -23,16 +24,36 @@ import { useAuth } from '@features/auth/auth'
 export function AppRfqDetailPage() {
   const { id } = useParams()
   const auth = useAuth()
+  const navigate = useNavigate()
   const [rfq, setRfq] = useState<Rfq | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [contactBusy, setContactBusy] = useState(false)
 
   const isAdmin = auth.role === 'admin'
   const isOwner = !!rfq && rfq.buyerId === auth.userId
+  const isSeller = auth.role === 'seller'
   const isMatchedSeller =
-    auth.role === 'seller' && !!rfq?.matches?.some((m) => m.sellerId === auth.userId)
+    isSeller && !!rfq?.matches?.some((m) => m.sellerId === auth.userId)
+  const isActiveRfq = !!rfq && rfq.status !== 'fulfilled' && rfq.status !== 'closed'
+  // Sellers who aren't matched yet but see an active RFQ get a direct
+  // "write to buyer" path that opens (or reuses) a messaging thread.
+  const canSellerContact = isSeller && !isMatchedSeller && isActiveRfq && !!rfq
   // Admin lives under /admin/rfq, others under /app/rfq.
   const basePath = isAdmin ? '/admin/rfq' : '/app/rfq'
+
+  const handleContactBuyer = async () => {
+    if (!rfq) return
+    setContactBusy(true)
+    try {
+      const thread = await apiOpenThread({ counterpartId: rfq.buyerId })
+      navigate(`/app/messages/${thread.id}`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Не удалось открыть переписку.')
+    } finally {
+      setContactBusy(false)
+    }
+  }
 
   const reload = async () => {
     if (!id) return
@@ -96,6 +117,18 @@ export function AppRfqDetailPage() {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {canSellerContact && (
+            <Button
+              variant="primary"
+              size="sm"
+              className="gap-1"
+              disabled={contactBusy}
+              onClick={() => void handleContactBuyer()}
+            >
+              <MessageCircle className="size-4" />
+              {contactBusy ? 'Открываем переписку…' : 'Написать покупателю'}
+            </Button>
+          )}
           {isOwner && rfq.status === 'open' && (
             <Link to={`${basePath}/${rfq.id}/edit`}>
               <Button variant="secondary" size="sm">Редактировать</Button>

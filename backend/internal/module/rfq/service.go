@@ -73,7 +73,11 @@ func (s *Service) List(ctx context.Context, role, userID, statusFilter string) (
 	case "buyer":
 		f.BuyerID = userID
 	case "seller":
-		f.SellerID = userID
+		// Sellers browse the marketplace of all active RFQs and decide which
+		// ones to engage with — they're not limited to admin-curated matches.
+		// The "matched to me" view is still available via the matches array
+		// rendered on the detail page.
+		f.ActiveOnly = true
 	case "admin", "institutional":
 		// No additional filter — admin/institutional see everything.
 	default:
